@@ -1,4 +1,4 @@
-
+const ApiResponse = require("./ApiResponse")
 class customError extends Error {
 
     constructor(message, status = 400, code = "000000") {
@@ -8,6 +8,10 @@ class customError extends Error {
         this.code = code;
         this.status = status;
         this.extra = {};
+    }
+
+    serialize(){
+        return new ApiResponse (false, {err: {message: this.message, code: this.code}})
     }
 
 }

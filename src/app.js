@@ -1,18 +1,18 @@
 const express = require("express");
 const cors = require("cors");
 
-const errorHandlerMiddleware = require("./middleware/errorHandlerMiddleware");
-const successHandlerMiddleware = require("./middleware/successHandlerMiddleware");
+const errorHandlerMiddleware = require("./middleware/errorHandler");
 
 const botRouter = require("./routers/botRouter");
+const userRouter = require("./routers/userRouter");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/bot", botRouter);
+app.use("/api/v1", botRouter);
+app.use("/api/v1", userRouter);
 
-app.use(successHandlerMiddleware);
 app.use(errorHandlerMiddleware);
 
 module.exports = app;

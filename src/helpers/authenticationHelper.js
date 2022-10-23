@@ -1,7 +1,7 @@
 // const jwt = require("jsonwebtoken");
 // const customError = require("../models/CustomError");
 
-const auth = async (req, res, next) => {
+module.exports.authenticationHandler = async (req, res, next) => {
   try {
     // const token = req.get("Authorization").replace("Bearer ", "");
     // const data = jwt.verify(token, process.env.SECRET);
@@ -26,4 +26,23 @@ const auth = async (req, res, next) => {
   }
 };
 
-module.exports = auth;
+
+module.exports.generateAndSaveAuthToken = (id)=> {
+  try {
+    const token = jwt.sign({ _id: id }, process.env.JWT_SECRET_USER);
+    // console.log(insertToken.recordset);
+  } catch (err) {
+    console.log(err);
+  }
+}
+//
+module.exports.deleteToken = (userId) => {
+  try {
+    // console.log({ fromDeleteToken: token });
+
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+
