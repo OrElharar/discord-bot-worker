@@ -4,7 +4,19 @@ const discordHelper = require("../helpers/discordHelper");
 
 const router = new express.Router();
 
-// router.post("/login", professorController.loginProfessor);
+router.post("/create-channel", async(req,res, next)=>{
+    const {err, response} = await discordHelper.createChannel(req.body.channelName);
+    if(err != null)
+        return next(err);
+    return res.status(200).send({ data: response });
+});
+
+router.post("/add-message", async(req,res, next)=>{
+    const {err, response} = await discordHelper.sendMessage(req.body.message);
+    if(err != null)
+        return next(err);
+    return res.status(200).send({ data: response });
+});
 
 // router.patch("/me", authProfessor, professorController.patchProfessor);
 
