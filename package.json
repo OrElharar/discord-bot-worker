@@ -1,0 +1,23 @@
+{
+  "name": "courses-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "env-cmd -f ./config/dev.env nodemon ./src/index.js -e js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.18.1",
+    "express-http-proxy": "^1.6.3",
+    "jsonwebtoken": "^8.5.1",
+    "validator": "^13.7.0"
+  },
+  "devDependencies": {
+    "env-cmd": "^10.1.0"
+  }
+}
