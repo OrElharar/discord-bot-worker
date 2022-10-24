@@ -5,7 +5,7 @@ const discordHelper = require("../helpers/discordHelper");
 const router = new express.Router();
 
 router.post("/create-channel", async(req,res, next)=>{
-    const {err, response} = await discordHelper.createChannel(req.body.channelName);
+    const {err, response} = await discordHelper.sendCreateChannelMsg(req.body.channelName);
     if(err != null)
         return next(err);
     return res.status(200).send({ data: response });
@@ -18,10 +18,5 @@ router.post("/add-message", async(req,res, next)=>{
     return res.status(200).send({ data: response });
 });
 
-// router.patch("/me", authProfessor, professorController.patchProfessor);
-
-// // only keep for admin purposes------------------------------------------------
-// router.post('/new', professorController.createProfessor)
-// router.get('/:professor', authProfessor, professorController.getProfessor)
 
 module.exports = router;
