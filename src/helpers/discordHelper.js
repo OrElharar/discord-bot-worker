@@ -82,9 +82,9 @@ const login = async()=>{
     client.login(process.env.DISCORD_BOT_TOKEN)
         .then()
         .catch((err)=> {
-            console.log("login Failed")
+            console.log("login to Discord bot Failed")
             login().then()
         })
 }
 
-login().then(()=> console.log("Login successfully"))
+login().then(()=> console.log("Login successfully to Discord bot"))
