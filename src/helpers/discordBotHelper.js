@@ -31,20 +31,15 @@ client.on("messageCreate", async (msg)=>{
             console.log(`Created channel ${channel.name} successfully`)
         }
         if(msg.content.type === "$move"){
-            console.log("In $move");
-            //TODO - find a way fetch GuildMember object by userId
             const discordUserId = msg.content.data.userId.slice(2, -1);
-            console.log({discordUserId})
-            // const test = msg.guild.members.cache.get(discordUserId); //failed
-            // console.log({test})
-            const member = client.members.cache.get(discordUserId);//failed
+            const member= msg.guild.members.cache.get(discordUserId)
             if(member == null) {
                 console.log({err: "Member was not mentioned"});
                 return;
             }
-            const channelId = msg.guild.channels.cache.find(channel => channel.name === "The Voice Channel");
+            const channelId = msg.guild.channels.cache.find(channel => channel.name === msg.content.data.channelName);
             const res = await member.voice.setChannel(channelId);
-            console.log({channelId, res})
+            console.log({channelId:channelId.id})
         }
 
     }catch(err){
