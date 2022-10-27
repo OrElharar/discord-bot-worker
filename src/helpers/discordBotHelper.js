@@ -1,10 +1,12 @@
 const { Client, IntentsBitField, GatewayIntentBits} = require('discord.js');
 const  globals = require("../helpers/globalsHelper");
+const {createAudioPlayer, joinVoiceChannel, createAudioResource,AudioPlayerStatus, } = require("@discordjs/voice");
+const ytdl = require("ytdl-core");
 
 const client = new Client({ intents: [IntentsBitField.Flags.Guilds,
         IntentsBitField.Flags.GuildMessages,
         IntentsBitField.Flags.MessageContent,
-        GatewayIntentBits.GuildMembers] });
+        GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildVoiceStates]});
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}, Ready to go`);
@@ -30,6 +32,22 @@ client.on("messageCreate", async (msg)=>{
             });
             console.log(`Created channel ${channel.name} successfully`)
         }
+        if(msg.content.type === "$play"){
+            const stream = ytdl(msg.content.data.url, {filter: "audioonly"})
+            const player = createAudioPlayer();
+            const resource = createAudioResource(stream);
+            const channel = msg.guild.channels.cache.find(channel => channel.name === msg.content.data.channelName);
+            const connection = joinVoiceChannel({
+                channelId: channel.id,
+                guildId: channel.guild.id,
+                adapterCreator: channel.guild.voiceAdapterCreator,
+            });
+            player.play(resource);
+            connection.subscribe(player)
+            player.on(AudioPlayerStatus.Idle, ()=>{
+                connection.destroy()
+            })
+        }
         if(msg.content.type === "$move"){
             const discordUserId = msg.content.data.userId.slice(2, -1);
             const member= msg.guild.members.cache.get(discordUserId)
@@ -37,9 +55,9 @@ client.on("messageCreate", async (msg)=>{
                 console.log({err: "Member was not mentioned"});
                 return;
             }
-            const channelId = msg.guild.channels.cache.find(channel => channel.name === msg.content.data.channelName);
-            const res = await member.voice.setChannel(channelId);
-            console.log({channelId:channelId.id})
+            const channel = msg.guild.channels.cache.find(channel => channel.name === msg.content.data.channelName);
+            const res = await member.voice.setChannel(channel);
+            console.log({channelId:channel.id})
         }
 
     }catch(err){

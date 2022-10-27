@@ -29,6 +29,18 @@ module.exports.sendCMoveMemberMsg = async(channelName, userId)=>{
     }
 }
 
+module.exports.sendBotPlayAudio = async(channelName, url)=>{
+    try{
+        if (url == null)
+            return {err: new CustomError("URL must be provided")}
+        const msg = new BotInstructions("$play", { channelName, url })
+        await axios.post(process.env.DISCORD_WEBHOOK_URL, {content: JSON.stringify(msg)});
+        return {response: new ApiResponse(true)}
+    }catch (err){
+        return {err}
+    }
+}
+
 module.exports.sendMessage = async(message)=>{
     try{
         await axios.post(process.env.DISCORD_WEBHOOK_URL, {content: message});
