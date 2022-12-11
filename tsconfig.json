@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "target": "es2016",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "dist",
+    "typeRoots": ["./@types"],
+    "baseUrl": ".",
+    "watch": false,
+    "paths": {
+      "*": ["*", "components/*"]
+    },
+    "types": ["node"],
+    "skipLibCheck": true
+  },
+  "lib": ["esnext"]
+}

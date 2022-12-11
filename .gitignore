@@ -1,2 +1,5 @@
-/config/dev.env
-/node_modules
+config/
+node_modules/
+dist/
+package-lock.json
+/**/*.js
