@@ -1,36 +1,25 @@
-import {Client, GatewayIntentBits, IntentsBitField} from 'discord.js';
+import {Client, GatewayIntentBits, IntentsBitField, ChannelType, GuildMember, Collection} from 'discord.js';
 import {Constants} from "./helpers/constantsHelper";
 
-// type MsgContentType = {
-//     type: string,
-//     data: any
-// }
 
 const client = new Client({ intents: [IntentsBitField.Flags.Guilds,
         IntentsBitField.Flags.GuildMessages,
         IntentsBitField.Flags.MessageContent,
         GatewayIntentBits.GuildMembers] });
 
-// const client = new Client({ intents: ["Guilds", "GuildMessages", "DirectMessages", "MessageContent", "GuildMembers"] });
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}, Ready to go`);
-    const guilds = client.guilds.cache;
-    guilds.forEach((guild)=> console.log(guild.name, guild.id))
-    const guild = client.guilds.cache.get('1033744515019849820');
-    // Get the list of channels
-    const channels = guild.channels.cache
-    channels.forEach(channel => {
-        // Get the channel ID
-        const channelId = channel.id;
-        // Get the channel name
-        const channelName = channel.name;
-        // Get the members in the channel (if it's a text or voice channel)
-        const members = channel.members;
-        console.log({channelId, channelName})
-        // const membersId = channel.members.map((member)=> member.id);
-        // console.log({channel: {id: channelId, name: channelName, membersId}})
+    const guild = client.guilds.cache.get(process.env.GUILD_ID);
+    const channels = {};
+    guild.channels.cache.filter(channel => ChannelType[channel.type] === "GuildVoice").forEach((channel)=>{
+        const memberIds = [];
+        const members = Array.from(channel.members as Collection<string, GuildMember>);
+        for (const [memberId, _value ] of members)
+            memberIds.push(memberId)
+        channels[channel.id] = {id: channel.id, name: channel.name, memberIds}
     });
+    console.log({channels})
 });
 
 client.on("error", (err)=>{
@@ -43,11 +32,6 @@ client.on("messageCreate", async (msg )=>{
         const content = isJsonValid(msg.content) ? JSON.parse(msg.content) : msg.content;
         if (msg.content === "PING")
             msg.channel.send("PONG")
-        // if(msg.author.id !== process.env.DISCORD_WEBHOOK_USER_ID) // Uncomment when debugging is done
-        //     return
-        // @ts-ignore
-        // if(typeof msg !== "MsgContentType" )
-        //     return;
 
         if (content.type === Constants.CREATE_NEW_CHANNEL_MSG) {
             const channel = await msg.guild.channels.create({
