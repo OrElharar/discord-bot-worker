@@ -1,5 +1,9 @@
 export class Constants {
     public static CREATE_NEW_CHANNEL_MSG = "$create";
+    public static MOVE_MEMBER_MSG = "$move";
+
+    public static DISCORD_VOICE_CHANNEL_TYPE = "GuildVoice";
+    public static DISCORD_VOICE_CHANNEL_INDEX_TYPE : 2 = 2;
     // public static AUTHENTICATION_FAILED_MESSAGE = "Access denied";
     // public static TOKEN_EXPIRES_IN_NUMBER_OF_SECONDS = 12 * 60 * 60 ;
     // public static TEMP_TOKEN_EXPIRES_IN_NUMBER_OF_SECONDS = 1 * 60 * 60 ;
