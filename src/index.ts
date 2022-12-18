@@ -6,8 +6,8 @@ const client = new Client({ intents: [IntentsBitField.Flags.Guilds,
         IntentsBitField.Flags.MessageContent,
         GatewayIntentBits.GuildMembers] });
 
-client.on('ready', () => {
-    DiscordEventsHandler.ready(client);
+client.on('ready', async () => {
+    await DiscordEventsHandler.ready(client);
 });
 
 client.on("error", (err)=>{

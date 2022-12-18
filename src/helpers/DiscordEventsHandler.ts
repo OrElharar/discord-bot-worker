@@ -1,6 +1,7 @@
 import {ChannelType, Client, Collection, GuildMember, Message} from "discord.js";
 import {Constants} from "./ConstantsHelper";
 import {Validations} from "./ValidationsHelper";
+import {DiscordService} from "../services/DiscordService";
 
 type ContentType = {
     type: string,
@@ -8,22 +9,44 @@ type ContentType = {
 }
 
 export class DiscordEventsHandler {
-   static ready(client: Client){
+    static discordService = DiscordService;
+    static usersIndex :Record<string, string> = {};
+
+   static async ready(client: Client){
        console.log(`Logged in as ${client.user.tag}, Ready to go`);
+       const {err, response} = await this.discordService.getUsersDiscordDataIndex();
+       if(err)
+           this.error(err);
+       else{
+           // this.usersIndex = response.data.usersIndex
+           this.usersIndex = response.data["usersIndex"];
+       }
        const guild = client.guilds.cache.get(process.env.GUILD_ID);
-       const channels = {};
+       const usersToBan = [];
+       const usersTrackingList = [];
        guild.channels.cache
            .filter(channel => ChannelType[channel.type] === Constants.DISCORD_VOICE_CHANNEL_TYPE)
            .forEach((channel)=>{
-               const memberIds :string[] = [];
                const members : any = Array.from(channel.members as Collection<string, GuildMember>);
                for (const [memberId, _value ] of members) {
-                   memberIds.push((memberId as string))
-                   // _value.user.email().then((e)=>{})
+                   if(this.usersIndex[memberId] == null)
+                       usersToBan.push(memberId);
+                   else
+                       usersTrackingList.push({
+                           userId: this.usersIndex[memberId],
+                           discordChannelId: channel.id,
+                           status: Constants.USER_TRACKING_STUDY_LABEL
+                       })
                }
-               channels[channel.id] = {id: channel.id, name: channel.name, memberIds}
            });
-       console.log({channels})
+       // TODO - add logic to ban "usersToBan"
+       if(usersTrackingList.length == 0)
+           return;
+       const {err: serviceErr } = await this.discordService.addUsersTracking({usersTracking: usersTrackingList});
+       if(serviceErr)
+           return this.error(serviceErr);
+       console.log(`DiscordEventsHandler added addUsersTracking for #${usersTrackingList.length} users.`)
+
    }
 
    static error(err: Error){
@@ -45,13 +68,23 @@ export class DiscordEventsHandler {
            console.log({err: "Member was not mentioned"});
            return;
        }
-       const channelId = msg.guild.channels.cache.find(channel => channel.name === content.data.channelName);
-       if(channelId == null){
+       const channel = msg.guild.channels.cache.find(channel => channel.name === content.data.channelName);
+       if(channel == null){
            console.log(`Channel : ${content.data.channelName} not found`);
            return;
        }
-       await member.voice.setChannel(channelId.id);
-       console.log({channelId:channelId.id})
+       await member.voice.setChannel(channel.id);
+       const userId = this.usersIndex[discordUserId];
+       if(userId == null){
+       //     TODO - Ban user
+           console.log(`User ${discordUserId} is not in usersIndex and should be banned`)
+       }
+       const {err: serviceErr } = await this.discordService.addUsersTracking({usersTracking: [{
+           userId, discordChannelId: channel.id, status: Constants.USER_TRACKING_STUDY_LABEL
+           }]});
+       if(serviceErr)
+           return this.error(serviceErr);
+       console.log(`DiscordEventsHandler added addUsersTracking for user ${userId}.`)
    }
    static async newMessage(msg: Message){
        try {
