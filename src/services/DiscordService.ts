@@ -6,9 +6,13 @@ import {Validations} from "../helpers/ValidationsHelper";
 import { ApiResponse } from "../models/ApiResponse";
 import {Constants} from "../helpers/ConstantsHelper";
 
-export abstract class DiscordService{
-    static discordRepository = DiscordRepository;
-    static async getUsersDiscordDataIndex() : Promise<ServiceResponse>{
+export class DiscordService{
+    discordRepository: DiscordRepository;
+
+    constructor() {
+        this.discordRepository = new DiscordRepository()
+    }
+    async getUsersDiscordDataIndex() : Promise<ServiceResponse>{
         try {
             const usersData = await this.discordRepository.getUsersDiscordData();
             const usersIndex :Record<string, string> = usersData.filter(({discordUserId})=> discordUserId != null)
@@ -23,7 +27,7 @@ export abstract class DiscordService{
             return {err}
         }
     }
-    static async addUsersTracking(data: IClientRequestData) : Promise<ServiceResponse>{
+    async addUsersTracking(data: IClientRequestData) : Promise<ServiceResponse>{
         try {
             if(data.usersTracking == null || !Array.isArray(data.usersTracking))
                 return {err: new CustomError("usersTracking field must be provided as an array")}
@@ -35,7 +39,7 @@ export abstract class DiscordService{
                 const {userId, discordChannelId} = userTracking
                 usersTrackingList.push({userId, discordChannelId, status: Constants.USER_TRACKING_STUDY_LABEL})
             })
-            await DiscordRepository.addUsersTracking(usersTrackingList);
+            await this.discordRepository.addUsersTracking(usersTrackingList);
             return {response: new ApiResponse(true, {})}
         }catch (err){
             return {err}

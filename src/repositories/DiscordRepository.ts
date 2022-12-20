@@ -1,6 +1,7 @@
-import pgClient from "../storage/postgresAdapter";
+import PgClient from "../storage/postgresAdapter";
 import {EntityRepository} from "./EntityRepository";
 import * as userTrackingQueries from "../helpers/postgresQueriesHelper/userTracking";
+import {PostgresAdapter} from "../storage/postgresAdapter";
 
 type UserDiscordDataType = {
     userId: string,
@@ -13,14 +14,20 @@ type UserTrackingType = {
     status: string
 }
 export class DiscordRepository extends EntityRepository{
+    private pgClient : PostgresAdapter;
 
-    static async getUsersDiscordData(): Promise<UserDiscordDataType[]>{
+    constructor() {
+        super();
+        this.pgClient = PgClient
+    }
+
+    async getUsersDiscordData(): Promise<UserDiscordDataType[]>{
         const selectUsersDiscordDataQuery = userTrackingQueries.getSelectUsersDiscordDataQuery();
         const values = [];
-        const response = await pgClient.callDbCmd(selectUsersDiscordDataQuery, values);
+        const response = await this.pgClient.callDbCmd(selectUsersDiscordDataQuery, values);
         return response.rows as UserDiscordDataType[]
     }
-    static async addUsersTracking(usersTrackingList: UserTrackingType[]): Promise<void>{
+    async addUsersTracking(usersTrackingList: UserTrackingType[]): Promise<void>{
         const insertUserTrackingQueriesBucket = [];
         const insertUserTrackingValuesBucket = [];
 
@@ -30,6 +37,6 @@ export class DiscordRepository extends EntityRepository{
             insertUserTrackingValuesBucket.push([data.userId, data.discordChannelId, data.status]);
         })
 
-        await pgClient.callDbTransaction(insertUserTrackingQueriesBucket, insertUserTrackingValuesBucket);
+        await this.pgClient.callDbTransaction(insertUserTrackingQueriesBucket, insertUserTrackingValuesBucket);
     }
 }

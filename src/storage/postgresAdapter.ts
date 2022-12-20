@@ -1,7 +1,7 @@
 import {PostgresAdapter} from "studentcher-shared-utils"
 
 
-const pgClient = new PostgresAdapter({
+const PgClient = new PostgresAdapter({
     host: process.env.POSTGRES_ADDR,
     database: process.env.DB_NAME,
     user: process.env.DB_USERNAME,
@@ -11,5 +11,6 @@ const pgClient = new PostgresAdapter({
     connectionTimeoutMillis: 10000
 })
 
-export default pgClient;
+export default PgClient;
+export {PostgresAdapter};
 
