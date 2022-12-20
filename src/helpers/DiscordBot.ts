@@ -1,4 +1,5 @@
-import {ChannelType, Client, Collection, GuildMember, Message} from "discord.js";
+import {ChannelType, Client, Collection, GuildMember, Message, TextChannel} from "discord.js";
+
 import {DiscordService} from "../services/DiscordService";
 import {Constants} from "./ConstantsHelper";
 import {Validations} from "./ValidationsHelper";
@@ -87,11 +88,13 @@ export class DiscordBot{
 
     async newMessage(msg: Message){
         try {
-            console.log(msg)
             const content = Validations.isJsonValid(msg.content) ? JSON.parse(msg.content) : msg.content;
             // if (msg.content === "PING")
             //     msg.channel.send("PONG")
+            if(msg.type == null)
+                return;
 
+            console.log(msg)
             if (content.type === Constants.CREATE_NEW_CHANNEL_MSG) {
                 await this.createNewChannel(msg, content);
                 return;
@@ -113,13 +116,29 @@ export class DiscordBot{
         });
         console.log(`Created channel ${channel.name} successfully`)
     }
+
+    async newMemberHandler(member : GuildMember): Promise<void>{
+        console.log(`New member logged in the server, id: ${member.user.id}, name: ${member.user.username}`)
+        const channel = member.guild.channels.cache.find(channel => channel.name === "lobby");
+        if(channel == null){
+            console.log(`Channel lobby not found`);
+            return;
+        }
+
+        // Add the user to the voice channel - Seems impossible
+        // await member.voice.setChannel(channel.id);
+        if(channel instanceof TextChannel)
+            await channel.send(`Hey ${member.user.username}, Please Enter the Classroom`);
+    }
     error(err: Error){
         console.log(`Discord Error: ${err.message}`);
     }
 
     async login() {
         this.client.login(process.env.DISCORD_BOT_TOKEN)
-            .then(()=> this.addEventsListener())
+            .then(()=> {
+                this.addEventsListener()
+            })
             .catch((err)=> {
                 console.log("login to Discord bot Failed, trying again...", err)
                 this.login()
@@ -138,10 +157,14 @@ export class DiscordBot{
         this.client.on("messageCreate", async (msg )=>{
             await this.newMessage(msg)
         })
+
+        this.client.on('guildMemberAdd', async (member) => {
+            await this.newMemberHandler(member)
+        });
     }
 
     run() :void{
-        this.login().then(()=>console.log("Login successfully to Discord bot"))
+        this.login().then(()=>console.log("Login in Discord bot..."))
     }
 }
 
