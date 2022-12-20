@@ -1,4 +1,13 @@
-import {ChannelType, Client, Collection, GuildMember, Message, TextChannel, VoiceChannel} from "discord.js";
+import {
+    ChannelType,
+    Client,
+    Collection,
+    GuildMember,
+    Message,
+    TextChannel,
+    VoiceBasedChannel,
+    VoiceState
+} from "discord.js";
 
 import {DiscordService} from "../services/DiscordService";
 import {Constants} from "./ConstantsHelper";
@@ -124,17 +133,18 @@ export class DiscordBot{
             return;
         }
 
-        // Add the user to the voice channel - Seems impossible
-        // await member.voice.setChannel(channel.id);
+        // TODO -
+        //  Add the user to the voice channel - Seems impossible - need to solve;
         if(channel instanceof TextChannel)
             await channel.send(`Hey ${member.user.username}, Please Enter the Classroom`);
     }
 
-    async memberJoinVoiceChannelHandler(member: GuildMember, voiceChannel: VoiceChannel) :Promise<void>{
+    async memberTrackingHandler(member: GuildMember, voiceChannel: VoiceBasedChannel , isMemberStudying : boolean = true) :Promise<void>{
         console.log(`Member id: ${member.user.id}, name: ${member.user.username}, joined VoiceChannel`)
         const discordUserId = member.user.id;
         const userId = this.usersIndex[discordUserId];
-        const usersTracking = [{userId, discordChannelId: voiceChannel.id, status: Constants.USER_TRACKING_STUDY_LABEL }]
+        const status = isMemberStudying ?  Constants.USER_TRACKING_STUDY_LABEL : Constants.USER_TRACKING_BREAK_LABEL;
+        const usersTracking = [{userId, discordChannelId: voiceChannel.id, status }]
         const {err: serviceErr } = await this.discordService.addUsersTracking({usersTracking});
         if(serviceErr)
             return this.error(serviceErr);
@@ -145,67 +155,60 @@ export class DiscordBot{
         console.log(`Discord Error: ${err.message}`);
     }
 
-    async login() {
-        return new Promise((res, _rej)=>{
-            this.client.login(process.env.DISCORD_BOT_TOKEN)
-                .then(()=> {
-                    this.addEventsListener();
-                    res()
-                })
-                .catch((err)=> {
-                    console.log("login to Discord bot Failed, trying again...", err.message)
-                    this.login()
-                })
-        })
+    async run(): Promise<void>{
+        try{
+            console.log("Starting DiscordBot...");
+            await this.client.login(process.env.DISCORD_BOT_TOKEN);
 
+            this.client.on('ready', async () => {
+                try {
+                    await this.ready();
+                }catch (err){
+                    this.error(err)
+                }
+            });
+
+            this.client.on("messageCreate", async (msg )=>{
+                try{
+                    await this.newMessage(msg)
+                }catch (err){
+                    this.error(err)
+                }
+            })
+
+            this.client.on('guildMemberAdd', async (member) => {
+                try{
+                    await this.memberLoginHandler(member);
+                }catch (err){
+                    this.error(err)
+                }
+            });
+
+            this.client.on('voiceStateUpdate', async(oldState: VoiceState, newState: VoiceState) => {
+                const oldChannel = oldState?.channel;
+                const newChannel = newState?.channel;
+                console.log(`Fired voiceStateUpdate. newChannelExist: ${newChannel  !=null}, oldChannelExist: ${oldChannel!=null}`)
+
+                if(oldChannel?.id === newChannel?.id)
+                    return;
+                try {
+                    const {member, channel} = newChannel != null ? newState : oldState;
+                    const isMemberStudying = newChannel != null;
+                    await this.memberTrackingHandler(member, channel, isMemberStudying)
+                }catch (err){
+                    this.error(err)
+                }
+            });
+
+            this.client.on("error", (err)=>{
+                this.error(err);
+            })
+
+        }catch (err){
+            this.error(err)
+        }
     }
 
-    addEventsListener(): void{
-        console.log("Adding Events Listeners to DiscordBot...");
-        this.client.on('ready', async () => {
-            try {
-                await this.ready();
-            }catch (err){
-                this.error(err)
-            }
-        });
-
-        this.client.on("messageCreate", async (msg )=>{
-            try{
-                await this.newMessage(msg)
-            }catch (err){
-                this.error(err)
-            }
-        })
-
-        this.client.on('guildMemberAdd', async (member) => {
-            try{
-                await this.memberLoginHandler(member);
-            }catch (err){
-                this.error(err)
-            }
-        });
-
-        this.client.on('guildMemberJoin', async (member, voiceChannel) => {
-            try{
-                // TODO - For some reason it stopped to fire, need to check why.
-                console.log("guildMemberJoin EVENT FIRES")
-                await this.memberJoinVoiceChannelHandler(member, voiceChannel);
-            }catch (err){
-                this.error(err)
-            }
-        });
-
-        this.client.on("error", (err)=>{
-            this.error(err);
-        })
-    }
-
-    run() :void{
-        console.log("Logging in Discord bot...")
-        this.login()
-            .then(()=>console.log("Logged in Discord bot."))
-    }
 }
 
 

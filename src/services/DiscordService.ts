@@ -36,8 +36,8 @@ export class DiscordService{
                 const {result, message} = Validations.areFieldsProvided(["userId", "discordChannelId", "status"], userTracking);
                 if(!result)
                     return {err: new CustomError(message)}
-                const {userId, discordChannelId} = userTracking
-                usersTrackingList.push({userId, discordChannelId, status: Constants.USER_TRACKING_STUDY_LABEL})
+                const {userId, discordChannelId, status} = userTracking
+                usersTrackingList.push({userId, discordChannelId, status})
             })
             await this.discordRepository.addUsersTracking(usersTrackingList);
             return {response: new ApiResponse(true, {})}

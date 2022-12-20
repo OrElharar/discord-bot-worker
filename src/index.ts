@@ -4,7 +4,8 @@ import {DiscordBot} from "./helpers/DiscordBot";
 const client = new Client({ intents: [IntentsBitField.Flags.Guilds,
         IntentsBitField.Flags.GuildMessages,
         IntentsBitField.Flags.MessageContent,
-        GatewayIntentBits.GuildMembers] });
+        GatewayIntentBits.GuildMembers,
+        IntentsBitField.Flags.GuildVoiceStates] });
 
 
 const bot = new DiscordBot(client);
