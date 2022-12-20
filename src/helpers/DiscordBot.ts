@@ -131,6 +131,7 @@ export class DiscordBot{
     }
 
     async memberJoinVoiceChannelHandler(member: GuildMember, voiceChannel: VoiceChannel) :Promise<void>{
+        console.log(`Member id: ${member.user.id}, name: ${member.user.username}, joined VoiceChannel`)
         const discordUserId = member.user.id;
         const userId = this.usersIndex[discordUserId];
         const usersTracking = [{userId, discordChannelId: voiceChannel.id, status: Constants.USER_TRACKING_STUDY_LABEL }]
@@ -160,7 +161,7 @@ export class DiscordBot{
     }
 
     addEventsListener(): void{
-        console.log("Adding Events Listeners to DiscordBot...")
+        console.log("Adding Events Listeners to DiscordBot...");
         this.client.on('ready', async () => {
             try {
                 await this.ready();
@@ -187,6 +188,8 @@ export class DiscordBot{
 
         this.client.on('guildMemberJoin', async (member, voiceChannel) => {
             try{
+                // TODO - For some reason it stopped to fire, need to check why.
+                console.log("guildMemberJoin EVENT FIRES")
                 await this.memberJoinVoiceChannelHandler(member, voiceChannel);
             }catch (err){
                 this.error(err)
@@ -199,6 +202,7 @@ export class DiscordBot{
     }
 
     run() :void{
+        console.log("Logging in Discord bot...")
         this.login()
             .then(()=>console.log("Logged in Discord bot."))
     }
