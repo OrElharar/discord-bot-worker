@@ -76,22 +76,9 @@ export class DiscordBot{
             console.log({err: "Member was not mentioned"});
             return;
         }
-        const channel = msg.guild.channels.cache.find(channel => channel.name === content.data.channelName);
-        if(channel == null){
-            console.log(`Channel : ${content.data.channelName} not found`);
-            return;
-        }
-        await member.voice.setChannel(channel.id);
-        const userId = this.usersIndex[discordUserId];
-        if(userId == null){
-            //     TODO - Ban user
-            console.log(`User ${discordUserId} is not in usersIndex and should be banned`)
-        }
-        const usersTracking = [{userId, discordChannelId: channel.id, status: Constants.USER_TRACKING_STUDY_LABEL }]
-        const {err: serviceErr } = await this.discordService.addUsersTracking({usersTracking});
-        if(serviceErr)
-            return this.error(serviceErr);
-        console.log(`DiscordBot on ready added addUsersTracking for user ${userId}.`)
+        const discordChannelId =  content.data.channelId;
+        await member.voice.setChannel(discordChannelId);
+        console.log(`DiscordBot set channel for user ${discordUserId}, to be: ${discordChannelId}.`);
     }
 
     async newMessage(msg: Message){
@@ -99,7 +86,7 @@ export class DiscordBot{
             const content = Validations.isJsonValid(msg.content) ? JSON.parse(msg.content) : msg.content;
             // if (msg.content === "PING")
             //     msg.channel.send("PONG")
-            if(msg.type == null)
+            if(content.type == null)
                 return;
 
             console.log(msg)
@@ -151,8 +138,10 @@ export class DiscordBot{
         console.log(`DiscordEventsHandler added addUsersTracking for user ${userId}.`)
     }
 
-    error(err: Error){
-        console.log(`Discord Error: ${err.message}`);
+    error(err: Error | unknown){
+        const defaultError =  new Error("Error");
+        const error: Error = err instanceof Error ? err : defaultError;
+        console.log(`Discord Error: ${error.message}`);
     }
 
     async run(): Promise<void>{
