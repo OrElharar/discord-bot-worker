@@ -5,7 +5,6 @@ import {
     GuildMember,
     Message,
     TextChannel,
-    VoiceBasedChannel,
     VoiceState
 } from "discord.js";
 
@@ -126,12 +125,12 @@ export class DiscordBot{
             await channel.send(`Hey ${member.user.username}, Please Enter the Classroom`);
     }
 
-    async memberTrackingHandler(member: GuildMember, voiceChannel: VoiceBasedChannel , isMemberStudying : boolean = true) :Promise<void>{
+    async memberTrackingHandler(member: GuildMember, voiceChannelId: string , isMemberStudying : boolean = true) :Promise<void>{
         console.log(`Member id: ${member.user.id}, name: ${member.user.username}, joined VoiceChannel`)
         const discordUserId = member.user.id;
         const userId = this.usersIndex[discordUserId];
         const status = isMemberStudying ?  Constants.USER_TRACKING_STUDY_LABEL : Constants.USER_TRACKING_BREAK_LABEL;
-        const usersTracking = [{userId, discordChannelId: voiceChannel.id, status }]
+        const usersTracking = [{userId, discordChannelId: voiceChannelId, status }]
         const {err: serviceErr } = await this.discordService.addUsersTracking({usersTracking});
         if(serviceErr)
             return this.error(serviceErr);
@@ -148,7 +147,7 @@ export class DiscordBot{
         try{
             console.log("Starting DiscordBot...");
             await this.client.login(process.env.DISCORD_BOT_TOKEN);
-
+            console.log("Logged in", this.client.isReady())
             this.client.on('ready', async () => {
                 try {
                     await this.ready();
@@ -181,9 +180,10 @@ export class DiscordBot{
                 if(oldChannel?.id === newChannel?.id)
                     return;
                 try {
-                    const {member, channel} = newChannel != null ? newState : oldState;
+                    const member = newChannel != null ? newState.member : oldState.member;
+                    const channelId = newChannel != null ? newState.channel.id : null
                     const isMemberStudying = newChannel != null;
-                    await this.memberTrackingHandler(member, channel, isMemberStudying)
+                    await this.memberTrackingHandler(member, channelId, isMemberStudying)
                 }catch (err){
                     this.error(err)
                 }
