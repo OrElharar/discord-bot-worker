@@ -77,10 +77,14 @@ export class DiscordBot{
 
     async moveMember(msg: Message, content: ContentType){
         console.log(content.data);
-        const discordChannelId =  content.data.channelId;
-        const userIdsList = content.data.userIds;
-        for (let i = 0; i < userIdsList.length; i++ ){
-            const userId = userIdsList[i]
+        const usersTracking = content?.data?.usersTracking;
+        if(usersTracking == null)
+            return this.error(new Error("usersTracking was not provided in "));
+        const {err} = await this.discordService.addUsersTracking({usersTracking});
+        if(err)
+            return this.error(err);
+        for (let i = 0; i < usersTracking.length; i++ ){
+            const {userId, discordChannelId} = usersTracking[i]
             const discordUserId = this.usersIndex[userId];
             const member= msg.guild.members.cache.get(discordUserId)
             if(member == null) {
@@ -88,8 +92,9 @@ export class DiscordBot{
                 return;
             }
             await member.voice.setChannel(discordChannelId);
+            console.log(`DiscordBot set channel for ${userId}, to be: ${discordChannelId}.`);
         }
-        console.log(`DiscordBot set channel for users ${userIdsList.join}, to be: ${discordChannelId}.`);
+
     }
 
     async newMessage(msg: Message){
@@ -209,7 +214,9 @@ export class DiscordBot{
             })
 
         }catch (err){
-            this.error(err)
+            console.log("DiscordBot run failed, trying again...")
+            this.error(err);
+            this.run();
         }
     }
 
