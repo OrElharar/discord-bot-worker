@@ -20,25 +20,32 @@ type ContentType = {
 export class DiscordBot{
     private client: Client;
     private  usersIndex : Record<string, string>;
+    private  membersIndex : Record<string, string>;
     private discordService :DiscordService;
 
     constructor(client: Client) {
         this.client = client;
-        this.discordService = new DiscordService()
+        this.discordService = new DiscordService();
+        this.usersIndex = {};
+        this.membersIndex = {};
     }
 
-    async loadUsersIndex(){
+    async loadUsersIndexes(){
         const {err, response} = await this.discordService.getUsersDiscordDataIndex();
         if(err) {
             this.error(err);
             return
         }
         this.usersIndex = response.data["usersIndex"];
+        for(let userId in this.usersIndex){
+            const memberId = this.usersIndex[userId];
+            this.membersIndex[memberId] = userId;
+        }
         console.log(JSON.stringify(this.usersIndex))
     }
     async ready(){
         console.log(`Logged in as ${this.client.user.tag}, Ready to go`);
-        await this.loadUsersIndex();
+        await this.loadUsersIndexes();
         const guild = this.client.guilds.cache.get(process.env.GUILD_ID);
         const usersToBan = [];
         const usersTrackingList = [];
@@ -47,13 +54,14 @@ export class DiscordBot{
             .forEach((channel)=>{
                 const members : any = Array.from(channel.members as Collection<string, GuildMember>);
                 for (const [memberId, _value ] of members) {
-                    if(this.usersIndex[memberId] == null)
+                    const userId = this.membersIndex[memberId];
+                    if(userId == null)
                         usersToBan.push(memberId);
                     else
                         usersTrackingList.push({
-                            userId: this.usersIndex[memberId],
+                            userId,
                             discordChannelId: channel.id,
-                            status: Constants.USER_TRACKING_STUDY_LABEL
+                            status: Constants.DISCORD_MEMBER_ACTIVE_STATUS
                         })
                 }
             });
@@ -68,16 +76,20 @@ export class DiscordBot{
     }
 
     async moveMember(msg: Message, content: ContentType){
-        console.log(content.data)
-        const discordUserId = content.data.userId.slice(2, -1);
-        const member= msg.guild.members.cache.get(discordUserId)
-        if(member == null) {
-            console.log({err: "Member was not mentioned"});
-            return;
-        }
+        console.log(content.data);
         const discordChannelId =  content.data.channelId;
-        await member.voice.setChannel(discordChannelId);
-        console.log(`DiscordBot set channel for user ${discordUserId}, to be: ${discordChannelId}.`);
+        const userIdsList = content.data.userIds;
+        for (let i = 0; i < userIdsList.length; i++ ){
+            const userId = userIdsList[i]
+            const discordUserId = this.usersIndex[userId];
+            const member= msg.guild.members.cache.get(discordUserId)
+            if(member == null) {
+                console.log({err: "Member was not found"});
+                return;
+            }
+            await member.voice.setChannel(discordChannelId);
+        }
+        console.log(`DiscordBot set channel for users ${userIdsList.join}, to be: ${discordChannelId}.`);
     }
 
     async newMessage(msg: Message){
@@ -125,11 +137,10 @@ export class DiscordBot{
             await channel.send(`Hey ${member.user.username}, Please Enter the Classroom`);
     }
 
-    async memberTrackingHandler(member: GuildMember, voiceChannelId: string , isMemberStudying : boolean = true) :Promise<void>{
+    async memberTrackingHandler(member: GuildMember, voiceChannelId: string , status: string) :Promise<void>{
         console.log(`Member id: ${member.user.id}, name: ${member.user.username}, joined VoiceChannel`)
         const discordUserId = member.user.id;
-        const userId = this.usersIndex[discordUserId];
-        const status = isMemberStudying ?  Constants.USER_TRACKING_STUDY_LABEL : Constants.USER_TRACKING_BREAK_LABEL;
+        const userId = this.membersIndex[discordUserId];
         const usersTracking = [{userId, discordChannelId: voiceChannelId, status }]
         const {err: serviceErr } = await this.discordService.addUsersTracking({usersTracking});
         if(serviceErr)
@@ -183,7 +194,11 @@ export class DiscordBot{
                     const member = newChannel != null ? newState.member : oldState.member;
                     const channelId = newChannel != null ? newState.channel.id : null
                     const isMemberStudying = newChannel != null;
-                    await this.memberTrackingHandler(member, channelId, isMemberStudying)
+                    const isMemberEnteredNow = oldChannel == null;
+                    const status = isMemberStudying ?
+                        isMemberEnteredNow ? Constants.DISCORD_MEMBER_ACTIVE_STATUS: null :
+                        Constants.DISCORD_MEMBER_LEFT_STATUS;
+                    await this.memberTrackingHandler(member, channelId, status)
                 }catch (err){
                     this.error(err)
                 }
