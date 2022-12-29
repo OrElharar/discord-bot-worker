@@ -121,11 +121,11 @@ export class DiscordBot{
     }
 
     async createNewChannel(msg: Message, content :ContentType){
-        const channel = await msg.guild.channels.create({
+        await msg.guild.channels.create({
             name: content.data.channelName,
             type: Constants.DISCORD_VOICE_CHANNEL_INDEX_TYPE
         });
-        console.log(`Created channel ${channel.name} successfully`)
+        console.log(`Created channel ${content.data.channelName} successfully`)
     }
 
     async memberLoginHandler(member : GuildMember): Promise<void>{
