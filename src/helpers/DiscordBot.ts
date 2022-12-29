@@ -76,7 +76,7 @@ export class DiscordBot{
     }
 
     async moveMember(msg: Message, content: ContentType){
-        console.log(content.data);
+        // console.log(content.data);
         const usersTracking = content?.data?.usersTracking;
         if(usersTracking == null)
             return this.error(new Error("usersTracking was not provided in "));
@@ -105,7 +105,7 @@ export class DiscordBot{
             if(content.type == null)
                 return;
 
-            console.log(msg)
+            // console.log(msg)
             if (content.type === Constants.CREATE_NEW_CHANNEL_MSG) {
                 await this.createNewChannel(msg, content);
                 return;
