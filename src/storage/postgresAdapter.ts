@@ -1,4 +1,4 @@
-import {PostgresAdapter} from "studentcher-shared-utils"
+import {PostgresAdapter} from "../studentcher-shared-utils"
 
 
 const PgClient = new PostgresAdapter({

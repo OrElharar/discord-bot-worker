@@ -8,9 +8,8 @@ import {
     VoiceState
 } from "discord.js";
 
-import {DiscordService} from "../services/DiscordService";
-import {Constants} from "./ConstantsHelper";
-import {Validations} from "./ValidationsHelper";
+import {DiscordService, Constants, Validations, Logger} from "../studentcher-shared-utils";
+import logger from "./Logger";
 
 type ContentType = {
     type: string,
@@ -22,12 +21,14 @@ export class DiscordBot{
     private  usersIndex : Record<string, string>;
     private  membersIndex : Record<string, string>;
     private discordService :DiscordService;
+    private logger : Logger;
 
     constructor(client: Client) {
         this.client = client;
         this.discordService = new DiscordService();
         this.usersIndex = {};
         this.membersIndex = {};
+        this.logger = logger;
     }
 
     async loadUsersIndexes(){
@@ -41,10 +42,10 @@ export class DiscordBot{
             const memberId = this.usersIndex[userId];
             this.membersIndex[memberId] = userId;
         }
-        console.log(JSON.stringify(this.usersIndex))
+        this.logger.info(JSON.stringify(this.usersIndex))
     }
     async ready(){
-        console.log(`Logged in as ${this.client.user.tag}, Ready to go`);
+        this.logger.info(`Logged in as ${this.client.user.tag}, Ready to go`);
         await this.loadUsersIndexes();
         const guild = this.client.guilds.cache.get(process.env.GUILD_ID);
         const usersToBan = [];
@@ -71,12 +72,12 @@ export class DiscordBot{
         const {err: serviceErr } = await this.discordService.addUsersTracking({usersTracking: usersTrackingList});
         if(serviceErr)
             return this.error(serviceErr);
-        console.log(`DiscordEventsHandler added addUsersTracking for #${usersTrackingList.length} users.`)
+        this.logger.info(`DiscordEventsHandler added addUsersTracking for #${usersTrackingList.length} users.`)
 
     }
 
     async moveMember(msg: Message, content: ContentType){
-        // console.log(content.data);
+        // this.logger.debug(content.data)
         const usersTracking = content?.data?.usersTracking;
         if(usersTracking == null)
             return this.error(new Error("usersTracking was not provided in "));
@@ -88,11 +89,11 @@ export class DiscordBot{
             const discordUserId = this.usersIndex[userId];
             const member= msg.guild.members.cache.get(discordUserId)
             if(member == null) {
-                console.log({err: "Member was not found"});
+                this.error(new Error("Member was not found"))
                 return;
             }
             await member.voice.setChannel(discordChannelId);
-            console.log(`DiscordBot set channel for ${userId}, to be: ${discordChannelId}.`);
+            this.logger.info(`DiscordBot set channel for ${userId}, to be: ${discordChannelId}.`);
         }
 
     }
@@ -104,8 +105,7 @@ export class DiscordBot{
             //     msg.channel.send("PONG")
             if(content.type == null)
                 return;
-
-            // console.log(msg)
+            // this.logger.debug(JSON.stringify(msg))
             if (content.type === Constants.CREATE_NEW_CHANNEL_MSG) {
                 await this.createNewChannel(msg, content);
                 return;
@@ -125,14 +125,14 @@ export class DiscordBot{
             name: content.data.channelName,
             type: Constants.DISCORD_VOICE_CHANNEL_INDEX_TYPE
         });
-        console.log(`Created channel ${content.data.channelName} successfully`)
+        this.logger.info(`Created channel ${content.data.channelName} successfully`)
     }
 
     async memberLoginHandler(member : GuildMember): Promise<void>{
-        console.log(`New member logged in the server, id: ${member.user.id}, name: ${member.user.username}`)
+        this.logger.info(`New member logged in the server, id: ${member.user.id}, name: ${member.user.username}`)
         const channel = member.guild.channels.cache.find(channel => channel.name === "lobby");
         if(channel == null){
-            console.log(`Channel lobby not found`);
+            this.logger.error(`Channel lobby not found`)
             return;
         }
 
@@ -143,27 +143,27 @@ export class DiscordBot{
     }
 
     async memberTrackingHandler(member: GuildMember, voiceChannelId: string , status: string) :Promise<void>{
-        console.log(`Member id: ${member.user.id}, name: ${member.user.username}, joined VoiceChannel`)
+        this.logger.info(`Member id: ${member.user.id}, name: ${member.user.username}, joined VoiceChannel`)
         const discordUserId = member.user.id;
         const userId = this.membersIndex[discordUserId];
         const usersTracking = [{userId, discordChannelId: voiceChannelId, status }]
         const {err: serviceErr } = await this.discordService.addUsersTracking({usersTracking});
         if(serviceErr)
             return this.error(serviceErr);
-        console.log(`DiscordEventsHandler added addUsersTracking for user ${userId}.`)
+        this.logger.info(`DiscordEventsHandler added addUsersTracking for user ${userId}.`)
     }
 
     error(err: Error | unknown){
         const defaultError =  new Error("Error");
         const error: Error = err instanceof Error ? err : defaultError;
-        console.log(`Discord Error: ${error.message}`);
+        this.logger.error(error.message);
     }
 
     async run(): Promise<void>{
         try{
-            console.log("Starting DiscordBot...");
+            this.logger.info("Starting DiscordBot...");
             await this.client.login(process.env.DISCORD_BOT_TOKEN);
-            console.log("Logged in", this.client.isReady())
+            this.logger.info("Logged in, " + this.client.isReady())
             this.client.on('ready', async () => {
                 try {
                     await this.ready();
@@ -191,7 +191,7 @@ export class DiscordBot{
             this.client.on('voiceStateUpdate', async(oldState: VoiceState, newState: VoiceState) => {
                 const oldChannel = oldState?.channel;
                 const newChannel = newState?.channel;
-                console.log(`Fired voiceStateUpdate. newChannelExist: ${newChannel  !=null}, oldChannelExist: ${oldChannel!=null}`)
+                this.logger.info(`Fired voiceStateUpdate. newChannelExist: ${newChannel  !=null}, oldChannelExist: ${oldChannel!=null}`)
 
                 if(oldChannel?.id === newChannel?.id)
                     return;
@@ -214,7 +214,7 @@ export class DiscordBot{
             })
 
         }catch (err){
-            console.log("DiscordBot run failed, trying again...")
+            this.logger.error("DiscordBot run failed, trying again...")
             this.error(err);
             this.run();
         }
