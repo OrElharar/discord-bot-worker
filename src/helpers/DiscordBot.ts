@@ -10,6 +10,7 @@ import {
 
 import {DiscordService, Constants, Validations, Logger} from "../studentcher-shared-utils";
 import logger from "./Logger";
+import {RedisAdapter} from "../studentcher-shared-utils/storage/RedisAdapter";
 
 type ContentType = {
     type: string,
@@ -22,6 +23,7 @@ export class DiscordBot{
     private  membersIndex : Record<string, string>;
     private discordService :DiscordService;
     private logger : Logger;
+    private redisClient: RedisAdapter
 
     constructor(client: Client) {
         this.client = client;
@@ -29,6 +31,10 @@ export class DiscordBot{
         this.usersIndex = {};
         this.membersIndex = {};
         this.logger = logger;
+        this.redisClient = new RedisAdapter({
+                host: process.env.REDIS_ADDRESS,
+                port: parseInt(process.env.REDIS_PORT)},
+            logger)
     }
 
     async loadUsersIndexes(){
@@ -147,10 +153,14 @@ export class DiscordBot{
         const discordUserId = member.user.id;
         const userId = this.membersIndex[discordUserId];
         const usersTracking = [{userId, discordChannelId: voiceChannelId, status }]
-        const {err: serviceErr } = await this.discordService.addUsersTracking({usersTracking});
+        const {err: serviceErr, response } = await this.discordService.addUsersTracking({usersTracking});
         if(serviceErr)
             return this.error(serviceErr);
-        this.logger.info(`DiscordEventsHandler added addUsersTracking for user ${userId}.`)
+        this.logger.info(`DiscordEventsHandler added addUsersTracking for user ${userId}.`);
+        for (const userTrack of response.data.usersTracking) {
+            const message = JSON.stringify({userTrack});
+            await this.redisClient.publish(Constants.STUDY_CHANNELS_SUBSCRIPTION, message);
+        }
     }
 
     error(err: Error | unknown){
