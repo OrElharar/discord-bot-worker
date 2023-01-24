@@ -56,7 +56,7 @@ class DiscordBot {
             }
         });
         // TODO - add logic to ban "usersToBan"
-        if (usersTrackingList.length == 0)
+        if (usersTrackingList.length === 0)
             return;
         const { err: serviceErr } = await this.discordService.addUsersTracking({ usersTracking: usersTrackingList });
         if (serviceErr)
@@ -67,6 +67,7 @@ class DiscordBot {
         var _a;
         // this.logger.debug(content.data)
         const usersTracking = (_a = content === null || content === void 0 ? void 0 : content.data) === null || _a === void 0 ? void 0 : _a.usersTracking;
+        this.logger.debug(JSON.stringify(usersTracking));
         if (usersTracking == null)
             return this.error(new Error("usersTracking was not provided in "));
         const { err } = await this.discordService.addUsersTracking({ usersTracking });
@@ -125,6 +126,7 @@ class DiscordBot {
             await channel.send(`Hey ${member.user.username}, Please Enter the Classroom`);
     }
     async memberTrackingHandler(member, voiceChannelId, status) {
+        var _a;
         this.logger.info(`Member id: ${member.user.id}, name: ${member.user.username}, joined VoiceChannel`);
         const discordUserId = member.user.id;
         const userId = this.membersIndex[discordUserId];
@@ -133,6 +135,7 @@ class DiscordBot {
         if (serviceErr)
             return this.error(serviceErr);
         this.logger.info(`DiscordEventsHandler added addUsersTracking for user ${userId}.`);
+        this.logger.debug(`usersTracking response - ${JSON.stringify((_a = response === null || response === void 0 ? void 0 : response.data) === null || _a === void 0 ? void 0 : _a.usersTracking)}`);
         for (const userTrack of response.data.usersTracking) {
             const message = JSON.stringify({ userTrack });
             await this.redisClient.publish(studentcher_shared_utils_1.Constants.STUDY_CHANNELS_SUBSCRIPTION, message);
@@ -176,8 +179,8 @@ class DiscordBot {
                 const oldChannel = oldState === null || oldState === void 0 ? void 0 : oldState.channel;
                 const newChannel = newState === null || newState === void 0 ? void 0 : newState.channel;
                 this.logger.info(`Fired voiceStateUpdate. newChannelExist: ${newChannel != null}, oldChannelExist: ${oldChannel != null}`);
-                if ((oldChannel === null || oldChannel === void 0 ? void 0 : oldChannel.id) === (newChannel === null || newChannel === void 0 ? void 0 : newChannel.id))
-                    return;
+                // if(oldChannel?.id === newChannel?.id)
+                //     return;
                 try {
                     const member = newChannel != null ? newState.member : oldState.member;
                     const channelId = newChannel != null ? newState.channel.id : null;

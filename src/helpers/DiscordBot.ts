@@ -85,6 +85,7 @@ export class DiscordBot{
     async moveMember(msg: Message, content: ContentType){
         // this.logger.debug(content.data)
         const usersTracking = content?.data?.usersTracking;
+        this.logger.debug(JSON.stringify(usersTracking))
         if(usersTracking == null)
             return this.error(new Error("usersTracking was not provided in "));
         const {err} = await this.discordService.addUsersTracking({usersTracking});
@@ -157,6 +158,7 @@ export class DiscordBot{
         if(serviceErr)
             return this.error(serviceErr);
         this.logger.info(`DiscordEventsHandler added addUsersTracking for user ${userId}.`);
+        this.logger.debug(`usersTracking response - ${JSON.stringify(response?.data?.usersTracking)}`)
         for (const userTrack of response.data.usersTracking) {
             const message = JSON.stringify({userTrack});
             await this.redisClient.publish(Constants.STUDY_CHANNELS_SUBSCRIPTION, message);
@@ -203,8 +205,8 @@ export class DiscordBot{
                 const newChannel = newState?.channel;
                 this.logger.info(`Fired voiceStateUpdate. newChannelExist: ${newChannel  !=null}, oldChannelExist: ${oldChannel!=null}`)
 
-                if(oldChannel?.id === newChannel?.id)
-                    return;
+                // if(oldChannel?.id === newChannel?.id)
+                //     return;
                 try {
                     const member = newChannel != null ? newState.member : oldState.member;
                     const channelId = newChannel != null ? newState.channel.id : null

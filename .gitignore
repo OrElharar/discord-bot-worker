@@ -3,3 +3,4 @@ node_modules/
 package-lock.json
 /src/studentcher-shared-utils/
 dist/
+/**/*.js
