@@ -56,25 +56,25 @@ export class DiscordBot{
         const guild = this.client.guilds.cache.get(process.env.GUILD_ID);
         const usersToBan = [];
         const usersTrackingList = [];
+        const loggedInUsers: Record<string, boolean> = {}
         guild.channels.cache
             .filter(channel => ChannelType[channel.type] === Constants.DISCORD_VOICE_CHANNEL_TYPE)
             .forEach((channel)=>{
                 const members : any = Array.from(channel.members as Collection<string, GuildMember>);
                 for (const [memberId, _value ] of members) {
                     const userId = this.membersIndex[memberId];
-                    if(userId == null)
-                        usersToBan.push(memberId);
-                    else
-                        usersTrackingList.push({
-                            userId,
-                            discordChannelId: channel.id,
-                            status: Constants.DISCORD_MEMBER_ACTIVE_STATUS
-                        })
+                    if(userId == null) {
+                        usersToBan.push(memberId)
+                        continue;
+                    }
+                    usersTrackingList.push({ userId, discordChannelId: channel.id, status: Constants.DISCORD_MEMBER_ACTIVE_STATUS })
+                    loggedInUsers[userId] = true;
                 }
             });
+        for(const userId in this.usersIndex)
+            if(!loggedInUsers[userId])
+                usersTrackingList.push({ userId, discordChannelId: null, status: Constants.DISCORD_MEMBER_LEFT_STATUS })
         // TODO - add logic to ban "usersToBan"
-        if(usersTrackingList.length == 0)
-            return;
         const {err: serviceErr } = await this.discordService.addUsersTracking({usersTracking: usersTrackingList});
         if(serviceErr)
             return this.error(serviceErr);
