@@ -1,1 +1,0 @@
-{"version":3,"file":"healthCheckHandler.js","sourceRoot":"","sources":["../../../src/studentcher-shared-utils/middlewares/healthCheckHandler.ts"],"names":[],"mappings":";;;AAEA,SAAgB,qBAAqB,CAAE,GAAY,EAAE,GAAa,EAAE,KAAe;IAC/E,OAAO,GAAG,CAAC,MAAM,CAAC,GAAG,CAAC,CAAC,IAAI,CAAC,IAAI,CAAC,CAAC;AACtC,CAAC;AAFD,sDAEC"}
