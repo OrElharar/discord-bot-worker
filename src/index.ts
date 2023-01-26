@@ -1,12 +1,10 @@
-import {Client, GatewayIntentBits, IntentsBitField} from 'discord.js';
-import {DiscordBot} from "./helpers/DiscordBot";
+import logger from "./helpers/Logger";
 
-const client = new Client({ intents: [IntentsBitField.Flags.Guilds,
-        IntentsBitField.Flags.GuildMessages,
-        IntentsBitField.Flags.MessageContent,
-        GatewayIntentBits.GuildMembers,
-        IntentsBitField.Flags.GuildVoiceStates] });
+const port = process.env.PORT;
 
+import app from "./app";
 
-const bot = new DiscordBot(client);
-bot.run();
+app.listen(port, async () => {
+    // await connectDb()
+    logger.info(`Server connected, port: ${port}`);
+})
