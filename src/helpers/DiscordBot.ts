@@ -96,6 +96,7 @@ export class DiscordBot{
             const discordUserId = this.usersIndex[userId];
             const member= msg.guild.members.cache.get(discordUserId)
             if(member == null) {
+                this.logger.warn(JSON.stringify({userId, discordUserId, discordChannelId}));
                 this.error(new Error("Member was not found"))
                 return;
             }
