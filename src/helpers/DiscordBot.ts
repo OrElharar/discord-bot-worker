@@ -9,7 +9,6 @@ import {
 } from "discord.js";
 
 import {DiscordService, Constants, Validations, Logger} from "../studentcher-shared-utils";
-import logger from "./Logger";
 import {RedisAdapter} from "../studentcher-shared-utils/storage/RedisAdapter";
 
 type ContentType = {
@@ -25,16 +24,13 @@ export class DiscordBot{
     private logger : Logger;
     private redisClient: RedisAdapter
 
-    constructor(client: Client) {
+    constructor(client, discordService, logger, redisClient) {
         this.client = client;
-        this.discordService = new DiscordService();
+        this.discordService = discordService;
         this.usersIndex = {};
         this.membersIndex = {};
         this.logger = logger;
-        this.redisClient = new RedisAdapter({
-                host: process.env.REDIS_ADDRESS,
-                port: parseInt(process.env.REDIS_PORT)},
-            logger)
+        this.redisClient = redisClient
     }
 
     async loadUsersIndexes(){

@@ -24,18 +24,16 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
-const RolesRepository_1 = require("../repositories/RolesRepository");
 const bcrypt = __importStar(require("bcrypt"));
-const UsersRepository_1 = require("../repositories/UsersRepository");
 const CustomError_1 = require("../models/CustomError");
 const ApiResponse_1 = require("../models/ApiResponse");
 const Validations_1 = require("../helpers/Validations");
-const CloudBucketAdapter_1 = require("../storage/CloudBucketAdapter");
+const Constants_1 = require("../helpers/Constants");
 class UsersService {
-    constructor() {
-        this.userRepository = new UsersRepository_1.UsersRepository();
-        this.rolesRepository = new RolesRepository_1.RolesRepository();
-        this.cloudBucketAdapter = new CloudBucketAdapter_1.CloudBucketAdapter();
+    constructor(userRepository, rolesRepository, cloudService) {
+        this.userRepository = userRepository;
+        this.rolesRepository = rolesRepository;
+        this.cloudService = cloudService;
     }
     static validateUserFields(data) {
         if (data.id == null)
@@ -56,6 +54,15 @@ class UsersService {
             const users = await this.userRepository.findMany(data);
             const roles = await this.rolesRepository.findMany(data);
             return { response: new ApiResponse_1.ApiResponse(true, { users, roles }) };
+        }
+        catch (err) {
+            return { err };
+        }
+    }
+    async getUser(data) {
+        try {
+            const user = await this.userRepository.findOne(data);
+            return { response: new ApiResponse_1.ApiResponse(true, Object.assign({}, user)) };
         }
         catch (err) {
             return { err };
@@ -107,16 +114,19 @@ class UsersService {
     async getPersonalZone(data) {
         var _a;
         try {
-            const privateZone = await this.userRepository.getPrivateZone(data);
-            const totalVideos = ((_a = privateZone === null || privateZone === void 0 ? void 0 : privateZone.currentActivity) === null || _a === void 0 ? void 0 : _a.videos.length) || 0;
+            const privateZoneData = await this.userRepository.getPrivateZone(data);
+            const totalVideos = ((_a = privateZoneData === null || privateZoneData === void 0 ? void 0 : privateZoneData.currentActivity) === null || _a === void 0 ? void 0 : _a.videos.length) || 0;
             const signedVideos = [];
             for (let i = 0; i < totalVideos; i++) {
-                const { title, index, fileName } = privateZone.currentActivity.videos[i];
-                const signedUrl = await this.cloudBucketAdapter.getSignedUrl(fileName);
-                signedVideos.push({ title, index, srcUrl: signedUrl });
+                const videoData = privateZoneData.currentActivity.videos[i];
+                const generationResponse = await this.cloudService.generatePreSignUrl({ fileName: videoData.fileName, action: Constants_1.Constants.CLOUD_STORAGE_PRE_SIGNED_URL_READ_ACTION });
+                if (generationResponse.err != null)
+                    return { err: generationResponse.err };
+                delete videoData.fileName;
+                signedVideos.push(Object.assign(Object.assign({}, videoData), { srcUrl: generationResponse.response.data.preSignedUrl }));
             }
-            privateZone.currentActivity = Object.assign(Object.assign({}, privateZone.currentActivity), { videos: signedVideos });
-            return { response: new ApiResponse_1.ApiResponse(true, { privateZone }) };
+            privateZoneData.currentActivity = Object.assign(Object.assign({}, privateZoneData.currentActivity), { videos: signedVideos });
+            return { response: new ApiResponse_1.ApiResponse(true, { privateZone: privateZoneData }) };
         }
         catch (err) {
             return { err };
@@ -124,14 +134,25 @@ class UsersService {
     }
     async addUserActivity(data) {
         try {
-            if (data.userId == null)
-                return { err: new CustomError_1.CustomError("User's id must be provided") };
-            if (data.planId == null)
-                return { err: new CustomError_1.CustomError("Plan's id must be provided") };
-            if (data.activityId == null)
-                return { err: new CustomError_1.CustomError("Activity's id must be provided") };
+            const { result, message } = Validations_1.Validations.areFieldsProvided(["userId", "planId", "activityId"], data);
+            if (!result)
+                return { err: new CustomError_1.CustomError(message) };
             await this.userRepository.addUserActivity(data);
             return { response: new ApiResponse_1.ApiResponse(true, {}) };
+        }
+        catch (err) {
+            if (err.constraint === "user_activity_history_pkey")
+                return { err: new CustomError_1.CustomError("(user_id, plan_id, activity_id) already monitored in the system") };
+            return { err };
+        }
+    }
+    async addUserActivityVideoStatus(data) {
+        try {
+            const { result, message } = Validations_1.Validations.areFieldsProvided(["userId", "planId", "activityId", "videoIndex"], data);
+            if (!result)
+                return { err: new CustomError_1.CustomError(message) };
+            const userActivityVideoStatus = await this.userRepository.addUserActivityVideo(data);
+            return { response: new ApiResponse_1.ApiResponse(true, { userActivityVideoStatus }) };
         }
         catch (err) {
             if (err.constraint === "user_activity_history_pkey")

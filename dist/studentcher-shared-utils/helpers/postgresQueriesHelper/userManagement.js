@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getInsertUserActivityQuery = exports.getSelectPersonalZoneQuery = exports.getDeleteUsersQuery = exports.getUpdateUserQuery = exports.getSelectIsUserPermissionAllowedQuery = exports.getSelectIsRoleIdValid = exports.getInsertUserQuery = exports.getSelectRolesDataQuery = exports.getSelectUsersQuery = exports.getSelectUserDataQuery = exports.getSelectUserPermissionsQuery = void 0;
+exports.getInsertUserActivityVideoStatusQuery = exports.getInsertUserActivityQuery = exports.getSelectPersonalZoneQuery = exports.getDeleteUsersQuery = exports.getUpdateUserQuery = exports.getSelectIsUserPermissionAllowedQuery = exports.getSelectIsRoleIdValid = exports.getInsertUserQuery = exports.getSelectRolesDataQuery = exports.getSelectUsersQuery = exports.getSelectUserDataQuery = exports.getSelectUserPermissionsQuery = void 0;
 function getSelectUserPermissionsQuery() {
     return `select json_build_object(  'userManagementEnabled', user_management_enabled, 
                                     'activityManagementEnabled', activity_management_enabled,
@@ -10,7 +10,7 @@ function getSelectUserPermissionsQuery() {
 }
 exports.getSelectUserPermissionsQuery = getSelectUserPermissionsQuery;
 function getSelectUserDataQuery() {
-    return `select id, name, phone_number as "phoneNumber", role_id as "roleId"
+    return `select id, name, phone_number, date_of_birth, profile_picture_url as "phoneNumber", role_id as "roleId"
             from users where id = $1 ;`;
 }
 exports.getSelectUserDataQuery = getSelectUserDataQuery;
@@ -23,7 +23,7 @@ function getSelectUsersQuery() {
                INNER JOIN traverse
                ON traverse.id = roles_hierarchy.responsible_role_id
             )
-            select u.id, name, phone_number as "phoneNumber", role_id as "roleId"
+            select u.id, name, phone_number as "phoneNumber", role_id as "roleId", discord_user_id as "discordUserId"
             from users u 
             join traverse t on t.id = u.role_id `;
 }
@@ -86,12 +86,11 @@ function getDeleteUsersQuery() {
 exports.getDeleteUsersQuery = getDeleteUsersQuery;
 function getSelectPersonalZoneQuery() {
     return `select u.id as "userId", u.name as "userName", r.name as "roleName", p.name as "planName", p.id as "planId",
-            current_activity as "currentActivity"
+            current_activity as "currentActivity", is_plan_finished as "isPlanFinished", last_video_seen_index as "lastVideoSeenIndex"
             from users u 
-            join roles r on u.role_id = r.id
-            left join user_current_activity uca on u.id = uca.user_id  
-            left join plans p on uca.plan_id = p.id
-            where u.id = $1`;
+            join roles r on u.id = $1 and u.role_id = r.id
+            left join user_current_activity(array[$1]) uca on u.id = uca.user_id  
+            left join plans p on uca.plan_id = p.id ; `;
 }
 exports.getSelectPersonalZoneQuery = getSelectPersonalZoneQuery;
 function getInsertUserActivityQuery() {
@@ -101,4 +100,10 @@ function getInsertUserActivityQuery() {
                 ended_at = EXCLUDED.ended_at;`;
 }
 exports.getInsertUserActivityQuery = getInsertUserActivityQuery;
+function getInsertUserActivityVideoStatusQuery() {
+    return `insert into user_activity_video_status_history ( user_id, plan_id, activity_id, video_index, is_completed  )  
+            VALUES ($1, $2, $3, $4, $5) 
+            RETURNING user_id as "userId", plan_id as "planId", activity_id as "activityId", video_index as "videoIndex", is_completed as "isCompleted" ;`;
+}
+exports.getInsertUserActivityVideoStatusQuery = getInsertUserActivityVideoStatusQuery;
 //# sourceMappingURL=userManagement.js.map

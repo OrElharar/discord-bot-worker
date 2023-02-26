@@ -1,24 +1,16 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DiscordBot = void 0;
 const discord_js_1 = require("discord.js");
 const studentcher_shared_utils_1 = require("../studentcher-shared-utils");
-const Logger_1 = __importDefault(require("./Logger"));
-const RedisAdapter_1 = require("../studentcher-shared-utils/storage/RedisAdapter");
 class DiscordBot {
-    constructor(client) {
+    constructor(client, discordService, logger, redisClient) {
         this.client = client;
-        this.discordService = new studentcher_shared_utils_1.DiscordService();
+        this.discordService = discordService;
         this.usersIndex = {};
         this.membersIndex = {};
-        this.logger = Logger_1.default;
-        this.redisClient = new RedisAdapter_1.RedisAdapter({
-            host: process.env.REDIS_ADDRESS,
-            port: parseInt(process.env.REDIS_PORT)
-        }, Logger_1.default);
+        this.logger = logger;
+        this.redisClient = redisClient;
     }
     async loadUsersIndexes() {
         const { err, response } = await this.discordService.getUsersDiscordDataIndex();

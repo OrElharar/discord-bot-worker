@@ -25,13 +25,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersRepository = void 0;
 const EntityRepository_1 = require("./EntityRepository");
-const PostgresAdapter_1 = require("../storage/PostgresAdapter");
 const userManagementQueries = __importStar(require("../helpers/postgresQueriesHelper/userManagement"));
 const CustomError_1 = require("../models/CustomError");
 class UsersRepository extends EntityRepository_1.EntityRepository {
-    constructor() {
+    constructor(pgClient) {
         super();
-        this.pgClient = PostgresAdapter_1.PgClient;
+        this.pgClient = pgClient;
     }
     async addOne(data) {
         const insertUserQuery = userManagementQueries.getInsertUserQuery();
@@ -49,7 +48,6 @@ class UsersRepository extends EntityRepository_1.EntityRepository {
     }
     async editOne(data) {
         const updateUserQuery = userManagementQueries.getUpdateUserQuery();
-        console.log({ data });
         const updateUserValues = [data.id, data.phoneNumber, data.name, data.roleId, data.hashedPassword, data.discordUserId];
         const response = await this.pgClient.callDbCmd(updateUserQuery, updateUserValues);
         if (response.rowCount === 0)
@@ -81,6 +79,12 @@ class UsersRepository extends EntityRepository_1.EntityRepository {
         const insertUserActivity = userManagementQueries.getInsertUserActivityQuery();
         const values = [data.userId, data.planId, data.activityId, data.isEnded];
         await this.pgClient.callDbCmd(insertUserActivity, values);
+    }
+    async addUserActivityVideo(data) {
+        const insertUserActivity = userManagementQueries.getInsertUserActivityVideoStatusQuery();
+        const values = [data.userId, data.planId, data.activityId, data.videoIndex, data.isCompleted];
+        const response = await this.pgClient.callDbCmd(insertUserActivity, values);
+        return response.rows[0];
     }
 }
 exports.UsersRepository = UsersRepository;

@@ -8,6 +8,8 @@ import {
     healthCheckMiddleware,
     errorsHandler
 } from "./studentcher-shared-utils";
+import discordService from "./services/DiscordService";
+import redisAdapter from "./storage/redisAdapter";
 
 
 const client = new Client({ intents: [IntentsBitField.Flags.Guilds,
@@ -17,7 +19,7 @@ const client = new Client({ intents: [IntentsBitField.Flags.Guilds,
         IntentsBitField.Flags.GuildVoiceStates] });
 
 
-const bot = new DiscordBot(client);
+const bot = new DiscordBot(client, discordService, logger, redisAdapter);
 bot.run();
 
 

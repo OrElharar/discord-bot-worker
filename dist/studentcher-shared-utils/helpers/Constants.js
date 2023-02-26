@@ -24,7 +24,12 @@ Constants.permissions = {
     studyPlanManagement: "plan_management_enabled",
     roleManagement: "role_management_enabled",
     activityTrackingEnabled: "activity_tracking_enabled",
-    liveSubscription: "live_subscription"
+    liveSubscription: "live_subscription",
+    appPanelEnabled: "app_panel_enabled",
+    quizzesManagementEnabled: "quizzes_management_enabled"
 };
 Constants.STUDY_CHANNELS_SUBSCRIPTION = "study_channels_subscription";
+Constants.votesSumDeltaAllowValues = [1, -1];
+Constants.CLOUD_STORAGE_PRE_SIGNED_URL_READ_ACTION = "READ";
+Constants.CLOUD_STORAGE_PRE_SIGNED_URL_WRITE_ACTION = "WRITE";
 //# sourceMappingURL=Constants.js.map

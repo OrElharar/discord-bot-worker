@@ -7,7 +7,7 @@ function getInsertUserTrackingQuery() {
                 from users u 
                 join roles r on u.id = $1 and u.role_id = r.id )
             insert into user_tracking_history (user_id, discord_channel_id, status, meeting_id) 
-            select $1, $2, COALESCE($3::text, status, 'active'), 
+            select $1, COALESCE($2::text, discord_channel_id), COALESCE($3::text, status, 'active'), 
             CASE when COALESCE($3::text, status, 'active') = 'active' then null else COALESCE($4, meeting_id) END
             from users u 
             join user_last_track ult on u.id = $1 and u.id = ult.id
@@ -23,7 +23,8 @@ function getSelectUsersDiscordDataQuery() {
 exports.getSelectUsersDiscordDataQuery = getSelectUsersDiscordDataQuery;
 function getSelectDiscordUserLastTrackQuery() {
     return `select  ult.id, u.name as "userName", r.name as "roleName", discord_channel_id as 
-            "discordChannelId", status, extract(epoch from last_seen_at)::float as "lastSeenAt"
+            "discordChannelId", status, extract(epoch from last_seen_at)::float as "lastSeenAt",
+             meeting_id as "meetingId"
             from  user_last_track ult 
             join users u on u.id = ult.id 
             join roles r on r.id = u.role_id

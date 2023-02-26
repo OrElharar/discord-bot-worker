@@ -9,12 +9,14 @@ const discord_js_1 = require("discord.js");
 const DiscordBot_1 = require("./helpers/DiscordBot");
 const Logger_1 = __importDefault(require("./helpers/Logger"));
 const studentcher_shared_utils_1 = require("./studentcher-shared-utils");
+const DiscordService_1 = __importDefault(require("./services/DiscordService"));
+const redisAdapter_1 = __importDefault(require("./storage/redisAdapter"));
 const client = new discord_js_1.Client({ intents: [discord_js_1.IntentsBitField.Flags.Guilds,
         discord_js_1.IntentsBitField.Flags.GuildMessages,
         discord_js_1.IntentsBitField.Flags.MessageContent,
         discord_js_1.GatewayIntentBits.GuildMembers,
         discord_js_1.IntentsBitField.Flags.GuildVoiceStates] });
-const bot = new DiscordBot_1.DiscordBot(client);
+const bot = new DiscordBot_1.DiscordBot(client, DiscordService_1.default, Logger_1.default, redisAdapter_1.default);
 bot.run();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());

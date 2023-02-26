@@ -26,11 +26,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DiscordRepository = void 0;
 const EntityRepository_1 = require("./EntityRepository");
 const userTrackingQueries = __importStar(require("../helpers/postgresQueriesHelper/userTracking"));
-const PostgresAdapter_1 = require("../storage/PostgresAdapter");
 class DiscordRepository extends EntityRepository_1.EntityRepository {
-    constructor() {
+    constructor(pgClient) {
         super();
-        this.pgClient = PostgresAdapter_1.PgClient;
+        this.pgClient = pgClient;
     }
     async getUsersDiscordData() {
         const selectUsersDiscordDataQuery = userTrackingQueries.getSelectUsersDiscordDataQuery();

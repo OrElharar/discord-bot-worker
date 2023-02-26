@@ -2,13 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DiscordService = void 0;
 const CustomError_1 = require("../models/CustomError");
-const DiscordRepository_1 = require("../repositories/DiscordRepository");
 const Validations_1 = require("../helpers/Validations");
 const ApiResponse_1 = require("../models/ApiResponse");
 const Constants_1 = require("../helpers/Constants");
 class DiscordService {
-    constructor() {
-        this.discordRepository = new DiscordRepository_1.DiscordRepository();
+    constructor(discordRepository) {
+        this.discordRepository = discordRepository;
     }
     static isUserStatusValid(status) {
         if (status == null)

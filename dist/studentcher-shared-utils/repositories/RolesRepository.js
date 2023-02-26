@@ -26,12 +26,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RolesRepository = void 0;
 const EntityRepository_1 = require("./EntityRepository");
 const userManagementQueries = __importStar(require("../helpers/postgresQueriesHelper/userManagement"));
-const PostgresAdapter_1 = require("../storage/PostgresAdapter");
+const questionsManagementQueries = __importStar(require("../helpers/postgresQueriesHelper/questionsManagement"));
 const CustomError_1 = require("../models/CustomError");
 class RolesRepository extends EntityRepository_1.EntityRepository {
-    constructor() {
+    constructor(pgClient) {
         super();
-        this.dbClient = PostgresAdapter_1.PgClient;
+        this.dbClient = pgClient;
     }
     async findMany(data) {
         const selectRolesDataQuery = userManagementQueries.getSelectRolesDataQuery();
@@ -56,6 +56,20 @@ class RolesRepository extends EntityRepository_1.EntityRepository {
         const values = [data.userId];
         const response = await this.dbClient.callDbCmd(selectUserPermissionsQuery, values);
         return response.rows[0].userPermissions;
+    }
+    async isQuestionsAccessible(data) {
+        const response = await this.dbClient.callDbCmd(questionsManagementQueries.getSelectAreQuestionsAccessible(), [data.questionIds, data.userId]);
+        if (!response.rows[0].IsAccessAllowed)
+            throw new CustomError_1.CustomError("User not having needed permissions to access this question");
+        return response.rows[0].IsAccessAllowed;
+    }
+    async isQuestionCommentsAccessible(commentIds, userId) {
+        const response = await this.dbClient.callDbCmd(questionsManagementQueries.getSelectAreQuestionCommentsAccessible(), [commentIds, userId]);
+        return response.rows[0].IsAccessAllowed;
+    }
+    async areQuizzesAccessible(quizzesIds, userId) {
+        const response = await this.dbClient.callDbCmd(questionsManagementQueries.getSelectAreQuizzesAccessible(), [quizzesIds, userId]);
+        return response.rows[0].IsAccessAllowed;
     }
     static async addOne(_data) {
         throw new Error("Method not implemented.");

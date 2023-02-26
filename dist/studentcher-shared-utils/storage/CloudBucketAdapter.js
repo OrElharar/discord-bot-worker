@@ -32,6 +32,7 @@ const stream_1 = require("stream");
 const crypto = __importStar(require("crypto"));
 const iv = Buffer.alloc(16, 0);
 const process = __importStar(require("process"));
+const Constants_1 = require("../helpers/Constants");
 const getEncryptionKey = () => {
     const encryptionKey = process.env.ENCRYPTION_KEY_SECRET;
     if (encryptionKey == null)
@@ -96,15 +97,15 @@ class CloudBucketAdapter {
     }
     async getSignedUrl(fileName, action = "READ") {
         const VALID_DURATION_IN_SEC = 600;
-        if (action === "READ")
+        if (action === Constants_1.Constants.CLOUD_STORAGE_PRE_SIGNED_URL_READ_ACTION)
             return await (0, s3_request_presigner_1.getSignedUrl)(this.s3Client, new client_s3_1.GetObjectCommand({
                 Bucket: bucketName,
                 Key: fileName
             }), { expiresIn: VALID_DURATION_IN_SEC });
-        if (action === "WRITE")
+        if (action === Constants_1.Constants.CLOUD_STORAGE_PRE_SIGNED_URL_WRITE_ACTION)
             return await (0, s3_request_presigner_1.getSignedUrl)(this.s3Client, new client_s3_1.PutObjectCommand({
                 Bucket: bucketName,
-                Key: fileName,
+                Key: fileName
             }), { expiresIn: VALID_DURATION_IN_SEC });
         throw new Error("Invalid action provided.");
     }
@@ -140,6 +141,23 @@ class CloudBucketAdapter {
             return { err };
         }
     }
+    async checkIfFileExists(fileName) {
+        const params = {
+            Bucket: bucketName,
+            Key: `${fileName}`,
+        };
+        try {
+            await s3v2.headObject(params).promise();
+            return true;
+        }
+        catch (error) {
+            if (['Forbidden', 'NotFound'].includes(error.code)) {
+                return false;
+            }
+            throw error;
+        }
+    }
+    ;
 }
 exports.CloudBucketAdapter = CloudBucketAdapter;
 CloudBucketAdapter.cipher = cipher;

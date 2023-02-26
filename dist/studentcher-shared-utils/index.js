@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CloudBucketAdapter = exports.AuthorizationService = exports.UsersService = exports.UsersRepository = exports.RolesRepository = exports.logReceivingMiddleware = exports.logFinishMiddleware = exports.errorsHandler = exports.healthCheckMiddleware = exports.whiteListHandler = exports.Constants = exports.DiscordService = exports.Validations = exports.ServiceResponse = exports.Role = exports.Plan = exports.Activity = exports.User = exports.Entity = exports.EntityRepository = exports.BotInstructions = exports.CustomError = exports.ApiResponse = exports.PgClient = exports.PostgresAdapter = exports.Logger = void 0;
+exports.CloudBucketAdapter = exports.QuizzesService = exports.AuthorizationService = exports.UsersService = exports.UsersRepository = exports.RolesRepository = exports.logReceivingMiddleware = exports.logFinishMiddleware = exports.errorsHandler = exports.healthCheckMiddleware = exports.whiteListHandler = exports.Constants = exports.DiscordService = exports.Validations = exports.ServiceResponse = exports.Role = exports.Plan = exports.Activity = exports.User = exports.Entity = exports.EntityRepository = exports.BotInstructions = exports.CustomError = exports.ApiResponse = exports.PgClient = exports.PostgresAdapter = exports.Logger = void 0;
 const Logger_1 = require("./helpers/Logger");
 var Logger_2 = require("./helpers/Logger");
 Object.defineProperty(exports, "Logger", { enumerable: true, get: function () { return Logger_2.Logger; } });
@@ -50,6 +50,8 @@ var UsersService_1 = require("./services/UsersService");
 Object.defineProperty(exports, "UsersService", { enumerable: true, get: function () { return UsersService_1.UsersService; } });
 var AuthorizationService_1 = require("./services/AuthorizationService");
 Object.defineProperty(exports, "AuthorizationService", { enumerable: true, get: function () { return AuthorizationService_1.AuthorizationService; } });
+var QuizzesService_1 = require("./services/QuizzesService");
+Object.defineProperty(exports, "QuizzesService", { enumerable: true, get: function () { return QuizzesService_1.QuizzesService; } });
 var CloudBucketAdapter_1 = require("./storage/CloudBucketAdapter");
 Object.defineProperty(exports, "CloudBucketAdapter", { enumerable: true, get: function () { return CloudBucketAdapter_1.CloudBucketAdapter; } });
 new Logger_1.Logger("shared-utils-package").info("compiled successfully...");
