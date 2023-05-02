@@ -25,14 +25,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CloudBucketAdapter = void 0;
 const AWS = __importStar(require("aws-sdk"));
+const crypto = __importStar(require("crypto"));
 const client_s3_1 = require("@aws-sdk/client-s3");
 const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
+const Constants_1 = require("../helpers/Constants");
 const ApiResponse_1 = require("../models/ApiResponse");
 const stream_1 = require("stream");
-const crypto = __importStar(require("crypto"));
 const iv = Buffer.alloc(16, 0);
 const process = __importStar(require("process"));
-const Constants_1 = require("../helpers/Constants");
 const getEncryptionKey = () => {
     const encryptionKey = process.env.ENCRYPTION_KEY_SECRET;
     if (encryptionKey == null)
@@ -64,6 +64,7 @@ const s3v2 = new AWS.S3({
         secretAccessKey
     }
 });
+const costExplorer = new AWS.CostExplorer({ region });
 class CloudBucketAdapter {
     constructor() {
         this.s3Client = s3;
@@ -147,8 +148,8 @@ class CloudBucketAdapter {
             Key: `${fileName}`,
         };
         try {
-            await s3v2.headObject(params).promise();
-            return true;
+            const res = await this.s3ClientV2.headObject(params).promise();
+            return res != null;
         }
         catch (error) {
             if (['Forbidden', 'NotFound'].includes(error.code)) {
@@ -157,7 +158,83 @@ class CloudBucketAdapter {
             throw error;
         }
     }
-    ;
+    // async  checkIfFilesExist(fileNamesList: string[]): Promise<void> {
+    //     const params: AWS.S3.Types.HeadObjectRequest[] = fileNamesList.map((fileName) => ({
+    //         Bucket: bucketName,
+    //         Key: fileName,
+    //     }));
+    //     const responses = await Promise.all(
+    //         params.map((param) => s3v2.headObject(param).promise())
+    //     );
+    //
+    //     const allFilesExist = responses.every((res) => res != null);
+    //
+    //     if (!allFilesExist) {
+    //         const missingFiles = fileNamesList.filter((fileName, index) => responses[index] == null);
+    //         throw new CustomError(`The following files do not exist in S3: ${missingFiles.join(', ')}`);
+    //     }
+    // }
+    static getBucketBillingParams(startDate, endDate) {
+        return {
+            Granularity: 'MONTHLY',
+            Metrics: ['UnblendedCost'],
+            TimePeriod: {
+                Start: startDate.toISOString().slice(0, 10),
+                End: endDate.toISOString().slice(0, 10),
+            },
+            Filter: {
+                And: [
+                    {
+                        Dimensions: {
+                            Key: 'USAGE_TYPE',
+                            Values: ['S3 Object Transition-Infrequent Access'],
+                        },
+                    },
+                    {
+                        Dimensions: {
+                            Key: 'SERVICE',
+                            Values: ['Amazon Simple Storage Service'],
+                        },
+                    },
+                    {
+                        Dimensions: {
+                            Key: 'LINKED_ACCOUNT',
+                            Values: [process.env.CLOUD_AWS_ACCOUNT_ID],
+                        },
+                    },
+                ],
+            },
+            GroupBy: [
+                {
+                    Type: 'DIMENSION',
+                    Key: 'USAGE_TYPE'
+                }
+            ]
+        };
+    }
+    async getBucketBilling(regionName) {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const params = CloudBucketAdapter.getBucketBillingParams(start, end);
+        const costExplorer = new AWS.CostExplorer({
+            region: regionName,
+            credentials: {
+                accessKeyId,
+                secretAccessKey
+            }
+        });
+        const response = await costExplorer.getCostAndUsage(params).promise();
+        const cost = response.ResultsByTime[0].Total.UnblendedCost.Amount;
+        return Number(cost);
+    }
+    async getFileNamesFromBucketByPrefix(prefix) {
+        const objects = await this.s3ClientV2.listObjectsV2({
+            Bucket: bucketName,
+            Prefix: prefix + '/'
+        }).promise();
+        return objects.Contents.map(({ Key }) => Key);
+    }
 }
 exports.CloudBucketAdapter = CloudBucketAdapter;
 CloudBucketAdapter.cipher = cipher;

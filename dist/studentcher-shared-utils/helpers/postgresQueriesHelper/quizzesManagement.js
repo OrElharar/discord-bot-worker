@@ -101,27 +101,27 @@ function getSelectQuizFullData() {
 }
 exports.getSelectQuizFullData = getSelectQuizFullData;
 function getInsertUserQuizQuery() {
-    return `insert into users_quizzes (user_id, quiz_id) VALUES ($1, $2)
-            RETURNING user_id as "userId", quiz_id as "quizId", grade_in_dec as "gradeInDec", 
+    return `insert into trial_users_quizzes (user_id, quiz_id) VALUES ($1, $2)
+            RETURNING id, user_id as "userId", quiz_id as "quizId", grade_in_dec as "gradeInDec", 
             extract(epoch from ended_at)::float as "endedAt",
             extract(epoch from created_at)::float as "createdAt"; `;
 }
 exports.getInsertUserQuizQuery = getInsertUserQuizQuery;
 function getUpdateUserQuizQuery() {
-    return `update users_quizzes set 
-            ended_at     = CASE WHEN $3 = true THEN timezone('UTC'::TEXT, NOW()) ELSE ended_at END,
-            grade_in_dec = CASE WHEN $3 = true THEN calculate_user_quiz_grade(user_id, quiz_id) ELSE grade_in_dec END
-            WHERE user_id = $1 and 
-            quiz_id = $2 
-            RETURNING user_id as "userId", quiz_id as "quizId", grade_in_dec as "gradeInDec", 
+    return `update trial_users_quizzes set 
+            ended_at     = CASE WHEN $2 = true THEN timezone('UTC'::TEXT, NOW()) ELSE ended_at END,
+            grade_in_dec = CASE WHEN $2 = true THEN calculate_user_quiz_grade(id) ELSE grade_in_dec END
+            WHERE id = $1 
+            RETURNING id, user_id as "userId", quiz_id as "quizId", grade_in_dec as "gradeInDec", 
             extract(epoch from ended_at)::float as "endedAt",
             extract(epoch from created_at)::float as "createdAt";`;
 }
 exports.getUpdateUserQuizQuery = getUpdateUserQuizQuery;
+// users_quizzes
 function getInsertUserQuizQuestionsAnswersQuery() {
-    return `insert into users_quiz_questions_answers (user_id, quiz_question_id, quiz_question_answer_id) 
+    return `insert into trial_questions_answers (trial_id, quiz_question_id, quiz_question_answer_id) 
             VALUES ($1, $2, $3)
-            RETURNING user_id as "userId", quiz_question_id as "quizQuestionId", quiz_question_answer_id as "quizQuestionAnswerId",
+            RETURNING trial_id as "trialId", quiz_question_id as "quizQuestionId", quiz_question_answer_id as "quizQuestionAnswerId",
             extract(epoch from updated_at)::float as "updatedAt",
             extract(epoch from created_at)::float as "createdAt"; `;
 }

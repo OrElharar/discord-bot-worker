@@ -29,6 +29,7 @@ const Validations_1 = require("../helpers/Validations");
 const CustomError_1 = require("../models/CustomError");
 const ApiResponse_1 = require("../models/ApiResponse");
 const Constants_1 = require("../helpers/Constants");
+const process = __importStar(require("process"));
 class CloudService {
     constructor(cloudBucketAdapter) {
         this.cloudBucketAdapter = cloudBucketAdapter;
@@ -58,13 +59,30 @@ class CloudService {
             return { err };
         }
     }
+    async getBucketBilling() {
+        const region = process.env.CLOUD_BUCKET_REGION;
+        const billing = await this.cloudBucketAdapter.getBucketBilling(region);
+        return billing;
+    }
+    async getActivitiesVideosOnCloud() {
+        return this.cloudBucketAdapter.getFileNamesFromBucketByPrefix(Constants_1.Constants.CLOUD_ACTIVITIES_VIDEOS_BUCKET_PREFIX);
+    }
 }
 exports.CloudService = CloudService;
 CloudService.idGenerator = uuid.v1;
-CloudService.directoriesIndex = { questions: "stack-overflow-module/questions", answers: "stack-overflow-module/answers" };
+CloudService.directoriesIndex = {
+    questions: "stack-overflow-module/questions",
+    answers: "stack-overflow-module/answers",
+    activities: Constants_1.Constants.CLOUD_ACTIVITIES_VIDEOS_BUCKET_PREFIX,
+    interviewQuestions: 'interviewer-module/questions',
+    interviewAnswers: 'interviewer-module/answers'
+};
 CloudService.signedUrlActionsIndex = {
     [Constants_1.Constants.CLOUD_STORAGE_PRE_SIGNED_URL_READ_ACTION]: true,
     [Constants_1.Constants.CLOUD_STORAGE_PRE_SIGNED_URL_WRITE_ACTION]: true
 };
-CloudService.filesExtensionIndex = { "mp4": true };
+CloudService.filesExtensionIndex = {
+    "mp4": true,
+    "webm": true
+};
 //# sourceMappingURL=CloudService.js.map

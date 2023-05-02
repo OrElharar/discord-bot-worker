@@ -109,15 +109,15 @@ class QuizzesRepository extends EntityRepository_1.EntityRepository {
         const userQuiz = Object.assign(Object.assign({}, response[0].rows[0]), { quiz: response[1].rows[0] });
         return userQuiz;
     }
-    async updateUserQuiz(id, userId, questionsAnswers) {
+    async updateUserQuiz(id, trialId, questionsAnswers) {
         const sqlCommands = [];
         const insertUserQuizQuestionsAnswers = queries.getInsertUserQuizQuestionsAnswersQuery();
         const insertUserQuizQuestionsAnswersCommandsBucket = [];
         questionsAnswers.forEach(({ questionId, answerId }) => {
-            insertUserQuizQuestionsAnswersCommandsBucket.push(new DdCommand_1.DdCommand(insertUserQuizQuestionsAnswers, [userId, questionId, answerId]));
+            insertUserQuizQuestionsAnswersCommandsBucket.push(new DdCommand_1.DdCommand(insertUserQuizQuestionsAnswers, [trialId, questionId, answerId]));
         });
         const updateUserQuizQuery = queries.getUpdateUserQuizQuery();
-        const updateUserQuizCommand = new DdCommand_1.DdCommand(updateUserQuizQuery, [userId, id, true]);
+        const updateUserQuizCommand = new DdCommand_1.DdCommand(updateUserQuizQuery, [trialId, true]);
         const selectQuizFullDataQuery = queries.getSelectQuizFullData();
         const selectQuizFullDataCommand = new DdCommand_1.DdCommand(selectQuizFullDataQuery, [[id]]);
         sqlCommands.push(...insertUserQuizQuestionsAnswersCommandsBucket, updateUserQuizCommand, selectQuizFullDataCommand);

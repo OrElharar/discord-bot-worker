@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getInsertUserActivityVideoStatusQuery = exports.getInsertUserActivityQuery = exports.getSelectPersonalZoneQuery = exports.getDeleteUsersQuery = exports.getUpdateUserQuery = exports.getSelectIsUserPermissionAllowedQuery = exports.getSelectIsRoleIdValid = exports.getInsertUserQuery = exports.getSelectRolesDataQuery = exports.getSelectUsersQuery = exports.getSelectUserDataQuery = exports.getSelectUserPermissionsQuery = void 0;
+exports.getSelectUserMetaData = exports.getInsertUserActivityVideoStatusQuery = exports.getInsertUserActivityQuery = exports.getSelectPersonalZoneQuery = exports.getDeleteUsersQuery = exports.getUpdateUserQuery = exports.getSelectIsUserPermissionAllowedQuery = exports.getSelectIsRoleIdValid = exports.getInsertUserQuery = exports.getSelectRolesDataQuery = exports.getSelectUsersQuery = exports.getSelectUserDataQuery = exports.getSelectUserPermissionsQuery = void 0;
 function getSelectUserPermissionsQuery() {
     return `select json_build_object(  'userManagementEnabled', user_management_enabled, 
                                     'activityManagementEnabled', activity_management_enabled,
@@ -106,4 +106,11 @@ function getInsertUserActivityVideoStatusQuery() {
             RETURNING user_id as "userId", plan_id as "planId", activity_id as "activityId", video_index as "videoIndex", is_completed as "isCompleted" ;`;
 }
 exports.getInsertUserActivityVideoStatusQuery = getInsertUserActivityVideoStatusQuery;
+function getSelectUserMetaData() {
+    return `select user_id as "userId", plan_id as "planId", activity_id as "activityId", 
+            video_index as "videoIndex", meta_data as "metaData", timestamp 
+            from user_activity_meta_data
+            order by timestamp`;
+}
+exports.getSelectUserMetaData = getSelectUserMetaData;
 //# sourceMappingURL=userManagement.js.map

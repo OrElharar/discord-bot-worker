@@ -68,9 +68,9 @@ class AuthorizationService {
             throw new CustomError_1.CustomError("Access denied.");
     }
     async verifyAccessToFileOnCloud(fileName) {
-        if (fileName == null)
-            throw new Error("fileName must be provided");
-        return await this.cloudBucketAdapter.checkIfFileExists(fileName);
+        const isFileExist = await this.cloudBucketAdapter.checkIfFileExists(fileName);
+        if (!isFileExist)
+            throw new CustomError_1.CustomError(`File: ${fileName} not found.`);
     }
     async verifyAccessToQuizzes(quizzesIds, userId) {
         if ((!Array.isArray(quizzesIds)) || quizzesIds.length === 0 || userId == null)
@@ -78,6 +78,16 @@ class AuthorizationService {
         const isQuestionAccessible = await this.rolesRepository.areQuizzesAccessible(quizzesIds, userId);
         if (!isQuestionAccessible)
             throw new CustomError_1.CustomError("Access denied.");
+    }
+    async verifyAccessToStartQuiz(userId) {
+        const isUserInTest = await this.rolesRepository.isUserInTest({ userId });
+        if (isUserInTest)
+            throw new CustomError_1.CustomError("User cannot start a quiz until he complete the previous quiz he started.");
+    }
+    async verifyAccessToEndQuiz(userId) {
+        const isUserInTest = await this.rolesRepository.isUserInTest({ userId });
+        if (!isUserInTest)
+            throw new CustomError_1.CustomError("User cannot end a quiz if he is not in quiz.");
     }
 }
 exports.AuthorizationService = AuthorizationService;

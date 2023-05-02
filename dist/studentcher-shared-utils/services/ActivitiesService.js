@@ -29,7 +29,8 @@ const CustomError_1 = require("../models/CustomError");
 const Validations_1 = require("../helpers/Validations");
 const ApiResponse_1 = require("../models/ApiResponse");
 class ActivitiesService {
-    constructor(activitiesRepository, usersRepository, rolesRepository) {
+    constructor(authorizationService, activitiesRepository, usersRepository, rolesRepository) {
+        this.authorizationService = authorizationService;
         this.activitiesRepository = activitiesRepository;
         this.usersRepository = usersRepository;
         this.rolesRepository = rolesRepository;
@@ -61,12 +62,19 @@ class ActivitiesService {
         if (data.videos != null && !Array.isArray(data.videos))
             throw new CustomError_1.CustomError("Activity's videos must be an array.");
     }
+    async validatedActivityFields(data) {
+        ActivitiesService.validatedActivityFields(data);
+        if (!Array.isArray(data.videos))
+            return;
+        const fileNamesVerifications = data.videos.map(({ fileName }) => this.authorizationService.verifyAccessToFileOnCloud(fileName));
+        await Promise.all(fileNamesVerifications);
+    }
     async addActivity(data) {
         try {
             const { result, message } = Validations_1.Validations.areFieldsProvided(["name", "videos"], data);
             if (!result)
                 return { err: new CustomError_1.CustomError(message) };
-            ActivitiesService.validatedActivityFields(data);
+            await this.validatedActivityFields(data);
             data.activityId = ActivitiesService.idGenerator();
             const activity = await this.activitiesRepository.addOne(data);
             return { response: new ApiResponse_1.ApiResponse(true, { activity }) };
@@ -86,7 +94,7 @@ class ActivitiesService {
         try {
             if (data.activityId == null)
                 return { err: new CustomError_1.CustomError("Activity's id must be provided") };
-            ActivitiesService.validatedActivityFields(data);
+            await this.validatedActivityFields(data);
             const activity = await this.activitiesRepository.editOne(data);
             return { response: new ApiResponse_1.ApiResponse(true, { activity }) };
         }

@@ -27,6 +27,7 @@ exports.UsersRepository = void 0;
 const EntityRepository_1 = require("./EntityRepository");
 const userManagementQueries = __importStar(require("../helpers/postgresQueriesHelper/userManagement"));
 const CustomError_1 = require("../models/CustomError");
+const DdCommand_1 = require("../storage/DdCommand");
 class UsersRepository extends EntityRepository_1.EntityRepository {
     constructor(pgClient) {
         super();
@@ -85,6 +86,11 @@ class UsersRepository extends EntityRepository_1.EntityRepository {
         const values = [data.userId, data.planId, data.activityId, data.videoIndex, data.isCompleted];
         const response = await this.pgClient.callDbCmd(insertUserActivity, values);
         return response.rows[0];
+    }
+    async finDUsersMetaData() {
+        const selectUserMetaDataCmd = new DdCommand_1.DdCommand(userManagementQueries.getSelectUserMetaData(), []);
+        const response = await this.pgClient.callDb(selectUserMetaDataCmd);
+        return response.rows;
     }
 }
 exports.UsersRepository = UsersRepository;

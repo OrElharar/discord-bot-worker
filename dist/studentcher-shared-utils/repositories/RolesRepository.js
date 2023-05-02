@@ -71,6 +71,10 @@ class RolesRepository extends EntityRepository_1.EntityRepository {
         const response = await this.dbClient.callDbCmd(questionsManagementQueries.getSelectAreQuizzesAccessible(), [quizzesIds, userId]);
         return response.rows[0].IsAccessAllowed;
     }
+    async isUserInTest({ userId }) {
+        const response = await this.dbClient.callDbCmd(questionsManagementQueries.getIsUserInTestQuery(), [userId]);
+        return response.rows[0].isUserInTest;
+    }
     static async addOne(_data) {
         throw new Error("Method not implemented.");
     }

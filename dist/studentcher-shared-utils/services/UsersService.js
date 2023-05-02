@@ -160,6 +160,78 @@ class UsersService {
             return { err };
         }
     }
+    getUsersEventsByUsersMetaDataList(userActivityMetaDataList) {
+        const eventsByUserActivity = {};
+        for (const activityMetaData of userActivityMetaDataList) {
+            const { userId, planId, activityId, metaData, timestamp, videoIndex } = activityMetaData;
+            if (metaData.type === 'play' || metaData.type === 'pause') {
+                const key = `${userId}-${planId}-${activityId}-${videoIndex}`;
+                if (!eventsByUserActivity[key]) {
+                    eventsByUserActivity[key] = [];
+                }
+                eventsByUserActivity[key].push({
+                    type: metaData.type,
+                    timestamp
+                });
+            }
+        }
+        return eventsByUserActivity;
+    }
+    analyzeAndExtractUsersEvents(usersEventsIndex) {
+        const usersUsageIndex = {};
+        let allUsersTotalDuration = 0;
+        let allUsersEventsCounter = 0;
+        for (const key of Object.keys(usersEventsIndex)) {
+            const events = usersEventsIndex[key];
+            const [userId, _planId, _activityId, _videoIndex] = key.split('-');
+            let userEventsCounter = 0;
+            let userPlayDuration = 0;
+            for (let i = 0; i < events.length - 1; i++) {
+                userEventsCounter++;
+                if (events[i].type === 'play' && events[i + 1].type === 'pause') {
+                    const duration = events[i + 1].timestamp - events[i].timestamp;
+                    userPlayDuration += duration;
+                }
+            }
+            if (usersUsageIndex[userId] == null)
+                usersUsageIndex[userId] = {
+                    userPlayDuration: 0,
+                    userEventsNum: 0
+                };
+            usersUsageIndex[userId].userPlayDuration += userPlayDuration;
+            usersUsageIndex[userId].userEventsNum += userEventsCounter;
+            allUsersTotalDuration += userPlayDuration;
+            allUsersEventsCounter += userEventsCounter;
+        }
+        return { usersUsageIndex, allUsersTotalDuration, allUsersEventsCounter };
+    }
+    getCalculatedUsersUsage(usersEventsIndex) {
+        const userUsages = [];
+        const { usersUsageIndex, allUsersTotalDuration, allUsersEventsCounter } = this.analyzeAndExtractUsersEvents(usersEventsIndex);
+        for (const userId in usersUsageIndex) {
+            const { userPlayDuration, userEventsNum } = usersUsageIndex[userId];
+            const playPercentage = allUsersTotalDuration ? userPlayDuration / allUsersTotalDuration : 0;
+            const userUsage = {
+                userId,
+                playPercentage,
+                eventsPercentage: userEventsNum / allUsersEventsCounter,
+            };
+            userUsages.push(userUsage);
+        }
+        return userUsages;
+    }
+    async getUsersCloudUsage() {
+        try {
+            const userActivityMetaDataList = await this.userRepository.finDUsersMetaData();
+            const usersEventsIndex = this.getUsersEventsByUsersMetaDataList(userActivityMetaDataList);
+            const userCloudUsages = this.getCalculatedUsersUsage(usersEventsIndex);
+            const billing = await this.cloudService.getBucketBilling();
+            return { response: new ApiResponse_1.ApiResponse(true, { userCloudUsages, billing }) };
+        }
+        catch (err) {
+            return { err };
+        }
+    }
 }
 exports.UsersService = UsersService;
 UsersService.encryptionHandler = bcrypt;

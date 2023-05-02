@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CustomError = void 0;
 const ApiResponse_1 = require("./ApiResponse");
 class CustomError extends Error {
-    constructor(message, status = 400, code = "000000") {
+    constructor(message, status = 500, code = "000000") {
         super();
         this.name = "CustomError";
         this.message = message;

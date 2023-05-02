@@ -29,7 +29,9 @@ Constants.permissions = {
     quizzesManagementEnabled: "quizzes_management_enabled"
 };
 Constants.STUDY_CHANNELS_SUBSCRIPTION = "study_channels_subscription";
+Constants.STUDENT_NOTIFIER = 'student_notifier';
 Constants.votesSumDeltaAllowValues = [1, -1];
 Constants.CLOUD_STORAGE_PRE_SIGNED_URL_READ_ACTION = "READ";
 Constants.CLOUD_STORAGE_PRE_SIGNED_URL_WRITE_ACTION = "WRITE";
+Constants.CLOUD_ACTIVITIES_VIDEOS_BUCKET_PREFIX = "studentcher-module/activities";
 //# sourceMappingURL=Constants.js.map

@@ -44,6 +44,11 @@ class QuizzesService {
         }
     }
     static clearSecretsFromQuiz(quiz) {
+        delete quiz.questionsResponsesHistoryEnabled;
+        delete quiz.questionsFeedbackEnabled;
+        delete quiz.shuffleQuestionsEnabled;
+        if (quiz.categories == null)
+            return;
         for (let i = 0; i < quiz.categories.length; i++) {
             const category = quiz.categories[i];
             for (let j = 0; j < category.questions.length; j++) {
@@ -163,6 +168,7 @@ class QuizzesService {
             const { result, message } = Validations_1.Validations.areFieldsProvided(["id", "userId"], data);
             if (!result)
                 return { err: new CustomError_1.CustomError(message) };
+            await this.authorizationService.verifyAccessToStartQuiz(data.userId);
             const userQuiz = await this.quizzesRepository.insertUserQuiz(data.id, data.userId);
             QuizzesService.clearSecretsFromQuiz(userQuiz.quiz);
             return { response: new ApiResponse_1.ApiResponse(true, { userQuiz }) };
@@ -175,7 +181,7 @@ class QuizzesService {
     }
     async endUserQuiz(data) {
         try {
-            const { result, message } = Validations_1.Validations.areFieldsProvided(["id", "userId", "questionsAnswers"], data);
+            const { result, message } = Validations_1.Validations.areFieldsProvided(["id", "trialId", "userId", "questionsAnswers"], data);
             if (!result)
                 return { err: new CustomError_1.CustomError(message) };
             const questionsAnswers = data.questionsAnswers;
@@ -191,10 +197,24 @@ class QuizzesService {
                     return { err: new CustomError_1.CustomError(`Answers must be unique, answer - ${questionAnswer.answerId} sent more then once`) };
                 answerIdsIndex[questionAnswer.answerId] = questionAnswer.answerId;
             }
-            const userQuiz = await this.quizzesRepository.updateUserQuiz(data.id, data.userId, questionsAnswers);
+            await this.authorizationService.verifyAccessToEndQuiz(data.userId);
+            const userQuiz = await this.quizzesRepository.updateUserQuiz(data.id, data.trialId, questionsAnswers);
             return { response: new ApiResponse_1.ApiResponse(true, { userQuiz }) };
         }
         catch (err) {
+            return { err };
+        }
+    }
+    async getOptionalQuizzes(data) {
+        try {
+            const quizzes = await this.quizzesRepository.findMany(data);
+            for (let i = 0; i < quizzes.length; i++)
+                QuizzesService.clearSecretsFromQuiz(quizzes[i]);
+            return { response: new ApiResponse_1.ApiResponse(true, { quizzes }) };
+        }
+        catch (err) {
+            if (err.constraint === "quizzes_name_key")
+                return { err: new CustomError_1.CustomError("There is already a quiz with this name registered in the system.") };
             return { err };
         }
     }

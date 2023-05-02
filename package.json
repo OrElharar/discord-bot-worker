@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsc-watch --onSuccess \"node ./dist/index.js\"",
     "start": "tsc && node dist/index.js",
-    "link-utils": "cp -R ../studentcher-shared-utils/src/* ./src/studentcher-shared-utils/ "
+    "link-utils": "cp -R ../studentcher-backend-shared-utils/src/* ./src/studentcher-shared-utils/ "
   },
   "author": "",
   "license": "ISC",

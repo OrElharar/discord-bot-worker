@@ -33,7 +33,7 @@ class Validations {
             return Object.assign(Object.assign({}, accumulator), { [property]: false });
         }, {});
         Object.entries(checkedObj).forEach(([key, value]) => {
-            if (neededPropertiesIndex[key] != null && value != null)
+            if (neededPropertiesIndex[key] != null && value != null && value !== "")
                 neededPropertiesIndex[key] = true;
         });
         const unSatisfiedProperties = neededProperties.filter((property) => !neededPropertiesIndex[property]);

@@ -6,7 +6,7 @@ function errorsHandler(logger) {
     return (error, req, res, _next) => {
         logger.error(error.message);
         const err = error.constructor.name === "CustomError" ? error : new CustomError_1.CustomError("Error");
-        return res.status(400).json(err.serialize());
+        return res.status(err.status).json(err.serialize());
     };
 }
 exports.errorsHandler = errorsHandler;
